@@ -3,25 +3,25 @@ import { assets } from "@/assets/assets";
 import Image from "next/image";
 import { FeaturedItem } from "@/types";
 import { StaticImageData } from "next/image";
-import { ArrowRight, Headphones, Music, Laptop } from "lucide-react";
+import { ArrowRight, Headphones, Music, Laptop, Link } from "lucide-react";
 
 const products: FeaturedItem[] = [
   {
-    id: 1,
+    id: "1",
     image: assets.girl_with_headphone_image as unknown as string,
     title: "Unparalleled Sound",
     description: "Experience crystal-clear audio with premium headphones.",
     icon: Headphones,
   },
   {
-    id: 2,
+    id: "2",
     image: assets.girl_with_earphone_image as unknown as string,
     title: "Stay Connected",
     description: "Compact and stylish earphones for every occasion.",
     icon: Music,
   },
   {
-    id: 3,
+    id: "3",
     image: assets.boy_with_laptop_image as unknown as string,
     title: "Power in Every Pixel",
     description: "Shop the latest laptops for work, gaming, and more.",
@@ -58,10 +58,14 @@ export default function FeaturedProduct() {
               <p className="text-sm lg:text-base leading-5 max-w-60">
                 {description}
               </p>
-              <button className="flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded transition-colors">
+
+              <Link
+                href={`/product/${id}`}
+                className="flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded transition-colors"
+              >
                 Buy now
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
           </div>
         ))}

@@ -63,12 +63,16 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
 
   const handleSignOut = () => {
     startTransition(async () => {
-      await authClient.signOut({
-        fetchOptions: { onSuccess: () => router.push("/") },
-      });
+      try {
+        await authClient.signOut({
+          fetchOptions: { onSuccess: () => router.push("/") },
+        });
+      } catch (error) {
+        console.error("Sign out failed:", error);
+        // Optionally show a toast/notification to the user
+      }
     });
   };
-
   const cartCount = getCartCount();
 
   return (
@@ -124,7 +128,7 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
           {/* Cart */}
           <Link
             href="/cart"
-            aria-label="Shopping cart"
+            aria-label={cartCount > 0 ? `Shopping cart, ${cartCount} items` : "Shopping cart"}
             className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ShoppingCart className="h-5 w-5" />

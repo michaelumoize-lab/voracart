@@ -21,8 +21,10 @@ export function useProducts(limit?: number) {
       setLoading(true);
       const url = limit ? `/api/products?limit=${limit}` : "/api/products";
       const res = await fetch(url);
-      const data = await res.json();
-      
+      if (!res.ok) {
+        throw new Error(`HTTP error: ${res.status}`);
+      }
+      const data = await res.json();      
       if (data.success) {
         setProducts(data.products);
         setError(null);

@@ -5,50 +5,45 @@ import { useCart } from "@/hooks/useCart";
 import { Product } from "@/types";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Heart } from "lucide-react"; 
+import { Heart } from "lucide-react";
 import { FiveStarRating } from "@/components/ui/five-star-rating";
 
 interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const currency = "₦";
 
   const { cartItems, addToCart, updateCartQuantity } = useCart();
   const quantity = cartItems[product.id] || 0;
 
-  // Get the image URL (handle both string and array)
-  const imageUrl = Array.isArray(product.image) 
-    ? product.image[0] 
+  const imageUrl = Array.isArray(product.image)
+    ? product.image[0] ?? "/placeholder-product.png"
     : product.image;
 
-  // Use regular price if offerPrice doesn't exist
-  const displayPrice = product.offerPrice || product.price;
+  const displayPrice = product.offerPrice ?? product.price ?? 0;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation to product page
-    await addToCart(product.id);
-    toast.success(`${product.name} added to cart!`, {
-      icon: "🛒",
-      style: { borderRadius: "8px", background: "#333", color: "#fff" },
-    });
-  };
-
-  const handleDecrease = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation to product page
-    await updateCartQuantity(product.id, quantity - 1);
-    if (quantity - 1 === 0) {
-      toast.error(`${product.name} removed from cart`, {
-        icon: "🗑️",
-        style: { borderRadius: "8px", background: "#333", color: "#fff" },
-      });
-    } else {
-      toast.success(`${product.name} updated in cart`, {
+    e.stopPropagation();
+    try {
+      await addToCart(product.id);
+      toast.success(`${product.name} added to cart!`, {
         icon: "🛒",
         style: { borderRadius: "8px", background: "#333", color: "#fff" },
       });
+    } catch {
+      toast.error("Failed to add item to cart");
+    }
+  };
+
+  const handleDecrease = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (quantity > 1) {
+      updateCartQuantity(product.id, quantity - 1);
+    } else {
+      updateCartQuantity(product.id, 0);
     }
   };
 
@@ -63,7 +58,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       className="flex flex-col items-start gap-0.5 max-w-[200px] w-full cursor-pointer group"
     >
       {/* Image */}
-      <div className="cursor-pointer group relative bg-muted rounded-lg w-full h-52 flex items-center justify-center overflow-hidden">
+      <div className="relative bg-muted rounded-lg w-full h-52 flex items-center justify-center overflow-hidden">
         <Image
           src={imageUrl}
           alt={product.name}
@@ -71,12 +66,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           width={800}
           height={800}
         />
-        <button 
+
+        {/* Wishlist Button */}
+        <button
           className="absolute top-2 right-2 bg-background p-2 rounded-full shadow-md hover:bg-muted transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            // Add wishlist logic here
-            toast.success("Added to wishlist!");
+            toast("Wishlist coming soon!", { icon: "💡" });
           }}
         >
           <Heart className="h-3 w-3 text-muted-foreground hover:text-red-500" />
@@ -84,21 +80,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Name */}
-      <p className="md:text-base font-medium pt-2 w-full truncate text-foreground">
+      <h3 className="text-sm font-medium text-foreground line-clamp-2">
         {product.name}
-      </p>
-
-      {/* Description */}
-      {product.description && (
-        <p className="w-full text-xs text-muted-foreground max-sm:hidden truncate">
-          {product.description}
-        </p>
-      )}
+      </h3>
 
       {/* Rating */}
       <div className="flex items-center gap-2">
-  <FiveStarRating rating={product.rating || 4.5} size="sm" showNumber />
-</div>
+        <FiveStarRating rating={product.rating || 4.5} size="sm" showNumber />
+      </div>
 
       {/* Price + Cart Controls */}
       <div
@@ -106,7 +95,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-base font-medium text-foreground">
-          {currency}{displayPrice.toLocaleString()}
+          {currency}
+          {displayPrice.toLocaleString()}
         </p>
 
         {quantity === 0 ? (
@@ -138,6 +128,4 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </div>
     </div>
   );
-};
-
-export default ProductCard;
+}

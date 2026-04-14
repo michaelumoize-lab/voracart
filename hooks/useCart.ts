@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-hot-toast";
 
 type CartItems = Record<string, number>;
@@ -8,6 +8,7 @@ type CartItems = Record<string, number>;
 export function useCart(initialCart: CartItems = {}) {
   const [cartItems, setCartItems] = useState<CartItems>(initialCart);
   const [loading, setLoading] = useState(false);
+  const pendingOps = useRef(0);
 
   const fetchCart = useCallback(async () => {
     try {
@@ -37,22 +38,32 @@ export function useCart(initialCart: CartItems = {}) {
   };
 
   const addToCart = async (productId: string) => {
-    const previousCart = { ...cartItems };
     setLoading(true);
+    pendingOps.current++;
 
-    const currentQty = cartItems[productId] || 0;
-    const newQty = currentQty + 1;
+    let newQty: number;
 
-    setCartItems((prev) => ({ ...prev, [productId]: newQty }));
+    setCartItems((prev) => {
+      newQty = (prev[productId] || 0) + 1;
+      return { ...prev, [productId]: newQty };
+    });
+
 
     try {
-      await syncCart(productId, newQty);
+      await syncCart(productId, newQty!);
     } catch (err) {
-      setCartItems(previousCart);
+      setCartItems((prev) => {
+        const updated = { ...prev };
+        const revertedQty = (updated[productId] || 1) - 1;
+        if (revertedQty <= 0) delete updated[productId];
+        else updated[productId] = revertedQty;
+        return updated;
+      });
       console.error("Failed to add to cart:", err);
       toast.error("Could not update cart. Please try again.");
     } finally {
-      setLoading(false);
+      pendingOps.current--;
+      if (pendingOps.current === 0) setLoading(false);
     }
   };
 

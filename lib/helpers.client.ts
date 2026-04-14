@@ -12,8 +12,7 @@ export function useRole() {
     isAuthenticated: !!session,
     isSeller: session?.user?.role === "seller",
     isAdmin: session?.user?.role === "admin",
-    isBuyer: !session?.user?.role || session.user.role === "buyer",
-    isLoading: isPending,
+    isBuyer: !!session?.user && (!session.user.role || session.user.role === "buyer"),    isLoading: isPending,
     error,
     refetch,
   };

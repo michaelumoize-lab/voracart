@@ -72,13 +72,22 @@ export default function NotificationBell() {
   }, []);
 
   const handleOpen = async () => {
+    const previousUnreadCount = unreadCount;
+    const previousNotifications = notifications;
     setOpen((prev) => !prev);
     if (!open && unreadCount > 0) {
       // Optimistically clear badge
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       // Persist to server
-      await fetch("/api/notifications", { method: "PATCH" });
+      try {
+        const res = await fetch("/api/notifications", { method: "PATCH" });
+        if (!res.ok) throw new Error("Failed to mark as read");
+      } catch {
+        // Revert optimistic update on failure
+        setUnreadCount(previousUnreadCount);
+        setNotifications(previousNotifications);
+      }
     }
   };
 

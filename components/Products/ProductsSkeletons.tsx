@@ -1,22 +1,45 @@
 import React from "react";
 
-// Single product card skeleton
+// Single product card skeleton - matches ProductCard component exactly
 export const ProductCardSkeleton = () => (
-  <div className="flex flex-col gap-2 max-w-[200px] w-full animate-pulse">
-    <div className="w-full h-52 rounded-lg bg-gray-200 dark:bg-gray-700" />
-    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-1" />
-    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-    <div className="flex items-center justify-between mt-1">
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
-      <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-full w-20 max-sm:hidden" />
+  <div className="flex flex-col items-start gap-0.5 max-w-[200px] w-full animate-pulse">
+    {/* Image skeleton */}
+    <div className="relative bg-muted rounded-lg w-full h-52 flex items-center justify-center overflow-hidden">
+      <div className="w-4/5 h-4/5 md:w-full md:h-full bg-gray-200 dark:bg-gray-700" />
+      {/* Heart icon skeleton */}
+      <div className="absolute top-2 right-2 bg-background p-2 rounded-full shadow-md">
+        <div className="h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-600" />
+      </div>
+    </div>
+
+    {/* Name skeleton */}
+    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
+
+    {/* Description skeleton */}
+    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full max-sm:hidden" />
+
+    {/* Rating skeleton */}
+    <div className="flex items-center gap-2">
+      <div className="h-3 w-6 bg-gray-200 dark:bg-gray-700 rounded" />
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-3 w-3 rounded-full bg-gray-200 dark:bg-gray-700" />
+        ))}
+      </div>
+    </div>
+
+    {/* Price + Cart Controls skeleton */}
+    <div className="flex items-center justify-between w-full mt-1">
+      <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+      {/* Add to cart button skeleton */}
+      <div className="max-sm:hidden px-4 py-1.5 rounded-full w-24 h-8 bg-gray-200 dark:bg-gray-700" />
     </div>
   </div>
 );
 
 // Grid of product card skeletons
 export const ProductGridSkeleton = ({ count = 10 }: { count?: number }) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full">
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 w-full">
     {Array.from({ length: count }).map((_, i) => (
       <ProductCardSkeleton key={i} />
     ))}

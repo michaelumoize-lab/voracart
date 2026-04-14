@@ -114,13 +114,13 @@ export default function Footer() {
             </h3>
             <div className="flex flex-col gap-3">
               <Link
-                href="tel:+12345678900"
+                href="tel:+1-234-567-890"
                 className="group inline-flex items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border transition-colors group-hover:border-primary group-hover:text-primary">
                   <Phone className="h-3.5 w-3.5" />
                 </span>
-                +1-234-567-890
+                1-234-567-890
               </Link>
               <Link
                 href="mailto:contact@voracart.com"

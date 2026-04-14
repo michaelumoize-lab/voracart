@@ -36,9 +36,9 @@ export const isAdmin = cache(async (): Promise<boolean> => {
 
 export const isBuyer = cache(async (): Promise<boolean> => {
   const session = await getServerSession();
-  return !session?.user?.role || session.user.role === "buyer";
+  if (!session?.user) return false;
+  return !session.user.role || session.user.role === "buyer";
 });
-
 /**
  * Check if user has any of the specified roles
  */

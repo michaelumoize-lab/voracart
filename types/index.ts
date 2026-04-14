@@ -35,7 +35,7 @@ export interface Address {
   userId: string;
   fullName: string;
   phoneNumber: string;
-  pincode: number;
+  pincode: string;
   area: string;
   city: string;
   state: string;
@@ -67,7 +67,6 @@ export interface User {
   email: string;
   imageUrl: string;
   cartItems: Record<string, number>;
-  __v: number;
 }
 
 export interface CartItems {
@@ -84,7 +83,7 @@ export interface LocalProduct {
 }
 
 export interface FeaturedItem {
-  id: number;
+  id: string;
   image: string;
   title: string;
   description: string;

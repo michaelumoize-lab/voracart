@@ -21,7 +21,7 @@ export function FiveStarRating({ rating, size = "sm", showNumber = false }: Five
   const starSize = sizeClasses[size];
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1" role="img" aria-label={`Rating: ${rating.toFixed(1)} out of 5 stars`}>
       <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, index) => {
           if (index < fullStars) {
@@ -53,6 +53,5 @@ export function FiveStarRating({ rating, size = "sm", showNumber = false }: Five
           {rating.toFixed(1)}
         </span>
       )}
-    </div>
-  );
+    </div>  );
 }

@@ -48,8 +48,14 @@ export default function NewsLetter() {
         <div className="flex w-full max-w-lg flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="newsletter-email" className="sr-only">
+              Email address
+            </label>
+
             <input
               type="email"
+              id="newsletter-email"
+              name="email"
               placeholder="Enter your email address"
               className="h-12 w-full rounded-full border border-border bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-0 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             />

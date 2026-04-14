@@ -9,15 +9,13 @@ import { useProducts } from "@/hooks/useProducts";
 export default function HomeProducts() {
   const { products, loading, error } = useProducts(10); 
   
-  if (loading) {
-    return (
-      <section className="relative py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-          <ProductGridSkeleton count={10} />
-        </div>
-      </section>
-    );
-  }
+if (loading) {
+  return (
+    <section className="relative py-16">
+      <ProductGridSkeleton count={10} />
+    </section>
+  );
+}
 
   if (error) {
     return (
@@ -105,7 +103,7 @@ export default function HomeProducts() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <p className="text-xs text-muted-foreground">
-              {products.length} products available
+              Showing {products.length} trending products
             </p>
           </div>
         </>
