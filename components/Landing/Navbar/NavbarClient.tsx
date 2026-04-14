@@ -1,3 +1,4 @@
+// components/NavbarClient.tsx (updated)
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef } from "react";
@@ -33,7 +34,7 @@ const NAV_LINKS = [
 export default function NavbarClient({ session, role, isSeller }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { getCartCount } = useCart();
+  const { cartCount } = useCart(); // ✅ Get cartCount directly from hook
   const user = session?.user;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -69,11 +70,9 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
         });
       } catch (error) {
         console.error("Sign out failed:", error);
-        // Optionally show a toast/notification to the user
       }
     });
   };
-  const cartCount = getCartCount();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -234,57 +233,6 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
               Sign In
             </Link>
           )}
-
-          {/* Mobile menu toggle — button + dropdown share the same ref */}
-          {/* <div ref={mobileMenuRef} className="lg:hidden">
-            <button
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-label="Toggle mobile menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-
-            {mobileMenuOpen && (
-              <div className="absolute left-0 right-0 top-16 border-t border-border bg-background shadow-md">
-                <div className="mx-auto max-w-7xl space-y-1 px-4 py-3">
-                  {NAV_LINKS.map(({ href, label }) => {
-                    const isActive = pathname === href;
-                    return (
-                      <Link
-                        key={href}
-                        href={href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    );
-                  })}
-
-                  {isSeller && (
-                    <Link
-                      href="/seller"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                        pathname.startsWith("/seller")
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      }`}
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      Seller Dashboard
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )}
-          </div> */}
         </div>
       </div>
     </nav>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { CartProvider } from "@/contexts/CartContext";
 
 const fontSans = Oxanium({
   subsets: ["latin"],
@@ -46,36 +47,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Toaster
-            position="top-center"
-            reverseOrder={false}
-            gutter={8}
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: "#363636",
-                color: "#fff",
-                borderRadius: "8px",
-                padding: "16px",
-              },
-              success: {
-                duration: 3000,
-                style: {
-                  background: "green",
-                },
-                iconTheme: {
-                  primary: "white",
-                  secondary: "green",
-                },
-              },
-              error: {
-                duration: 4000,
-                style: {
-                  background: "red",
-                },
-              },
-            }}
           />
+          <CartProvider>
           {children}
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

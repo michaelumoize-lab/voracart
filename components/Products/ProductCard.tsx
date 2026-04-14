@@ -25,25 +25,23 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const displayPrice = product.offerPrice ?? product.price ?? 0;
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    try {
-      await addToCart(product.id);
-      toast.success(`${product.name} added to cart!`, {
-        icon: "🛒",
-        style: { borderRadius: "8px", background: "#333", color: "#fff" },
-      });
-    } catch {
-      toast.error("Failed to add item to cart");
+    
+    if (!product.id) {
+      toast.error("Invalid product");
+      return;
     }
+    
+    await addToCart(product.id);
   };
 
-  const handleDecrease = (e: React.MouseEvent) => {
+  const handleDecrease = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (quantity > 1) {
-      updateCartQuantity(product.id, quantity - 1);
+      await updateCartQuantity(product.id, quantity - 1);
     } else {
-      updateCartQuantity(product.id, 0);
+      await updateCartQuantity(product.id, 0);
     }
   };
 

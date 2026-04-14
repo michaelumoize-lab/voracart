@@ -1,14 +1,11 @@
+// app/api/cart/update/route.ts
 import { NextRequest } from "next/server";
-import { checkArcjet, apiSuccess, apiError } from "@/lib/api-helper";
-import { apiRateLimit } from "@/lib/arcjet";
+import { apiSuccess, apiError } from "@/lib/api-helper";
 import { updateCartSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/get-session";
 
 export async function POST(req: NextRequest) {
-  const protection = await checkArcjet(req, apiRateLimit);
-  if (protection.blocked) return protection.response;
-
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
 
@@ -27,7 +24,16 @@ export async function POST(req: NextRequest) {
 
   const { productId, quantity } = parsed.data;
 
-  // 4. Update DB
+  // ✅ Check if product exists before cart operation
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, name: true }
+  });
+
+  if (!product) {
+    return apiError(`Product with ID ${productId} not found`, 404);
+  }
+
   try {
     if (quantity === 0) {
       await prisma.cartItem.deleteMany({
