@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const fontSerif = Merriweather({
   subsets: ["latin"],
@@ -27,15 +27,50 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
-       <body className={`${geist.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", geist.variable)}
+    >
+      <body
+        className={`${geist.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
+      >
         <ThemeProvider
-        attribute="class"
+          attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          >
-          <Toaster />
+        >
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            gutter={8}
+            toastOptions={{
+              duration: 5000,
+              style: {
+                background: "#363636",
+                color: "#fff",
+                borderRadius: "8px",
+                padding: "16px",
+              },
+              success: {
+                duration: 3000,
+                style: {
+                  background: "green",
+                },
+                iconTheme: {
+                  primary: "white",
+                  secondary: "green",
+                },
+              },
+              error: {
+                duration: 4000,
+                style: {
+                  background: "red",
+                },
+              },
+            }}
+          />
           {children}
         </ThemeProvider>
       </body>
