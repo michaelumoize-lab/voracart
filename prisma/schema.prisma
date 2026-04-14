@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          String    @default("buyer")
-  banned        Boolean?  @default(false)
-  banReason     String?
-  banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
+  id              String    @id @default(cuid())
+  name            String?
+  email           String
+  emailVerified   Boolean   @default(false)
+  image           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  role            String    @default("buyer")
+  whatsappNumber  String?
+  products        Product[]
+  sellerApplication SellerApplication?
+  banned          Boolean?  @default(false)
+  banReason       String?
+  banExpires      DateTime?
+  sessions        Session[]
+  accounts        Account[]
 
   @@unique([email])
   @@map("user")
@@ -74,4 +77,37 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  price       Float
+  image       String
+  description String?
+  userId      String
+  category    String
+  offerPrice  Float?
+  stock       Int      @default(0)
+  rating      Float?   @default(0)
+  seller      User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SellerApplication {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  storeName      String
+  phone          String
+  description    String?
+  status         String    @default("PENDING")
+  adminNotes     String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("seller_applications")
 }
