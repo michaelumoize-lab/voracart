@@ -7,8 +7,11 @@ import { getServerSession } from "@/lib/get-session";
 // GET - Fetch products (keep only ONE)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const limit = parseInt(searchParams.get("limit") || "50");
-  
+  const MAX_LIMIT = 100;
+  const parsedLimit = parseInt(searchParams.get("limit") || "50", 10);
+  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 
+    ? 50 
+    : Math.min(parsedLimit, MAX_LIMIT);  
   try {
     const products = await prisma.product.findMany({
       take: limit,
@@ -46,8 +49,7 @@ export async function POST(request: NextRequest) {
     const validated = createProductSchema.parse(body);
     
     const product = await prisma.product.create({
-      data: {
-        name: validated.name,
+        image: validated.image[0] ?? "", // Fallback or throw if required        name: validated.name,
         price: validated.price,
         image: validated.image[0], // Take first image if array
         description: validated.description,

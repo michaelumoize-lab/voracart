@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Cart update error:", err);
     return apiError(
-      `Failed to update cart: ${err instanceof Error ? err.message : String(err)}`,
-      500,
+      "Failed to update cart. Please try again later.",
+      500
     );
   }
 }

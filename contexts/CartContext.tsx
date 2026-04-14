@@ -27,6 +27,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const fetchCart = useCallback(async () => {
     try {
       const res = await fetch("/api/cart/get");
+      if (!res.ok) {
+        throw new Error("Failed to fetch cart");
+      }
       const data = await res.json();
       if (data.success) {
         setCartItems(data.cart);
@@ -56,10 +59,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId, quantity }),
     });
-
+    
     if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Cart update failed");
+      let message = "Cart update failed";
+      try {
+        const data = await res.json();
+        message = data.message || message;
+      } catch {
+        // Response body wasn't valid JSON
+      }
+      throw new Error(message);
     }
   };
 
@@ -99,43 +108,42 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
- // contexts/CartContext.tsx - Update the updateCartQuantity function
-const updateCartQuantity = async (productId: string, quantity: number) => {
-  if (!productId) {
-    toast.error("Invalid product");
-    return;
-  }
-  
-  const previousCart = { ...cartItems };
-  const previousQuantity = cartItems[productId] || 0;
-  setLoading(true);
-
-  setCartItems((prev) => {
-    const updated = { ...prev };
-    if (quantity <= 0) delete updated[productId];
-    else updated[productId] = quantity;
-    return updated;
-  });
-
-  try {
-    await syncCart(productId, quantity);
-    
-    // ✅ Show appropriate toast based on the action
-    if (quantity === 0) {
-      toast.success("Item removed from cart");
-    } else if (quantity < previousQuantity) {
-      toast.success(`Quantity decreased to ${quantity}`);
-    } else if (quantity > previousQuantity) {
-      toast.success(`Quantity increased to ${quantity}`);
+  const updateCartQuantity = async (productId: string, quantity: number) => {
+    if (!productId) {
+      toast.error("Invalid product");
+      return;
     }
-  } catch (err) {
-    setCartItems(previousCart);
-    console.error("Failed to update cart quantity:", err);
-    toast.error(err instanceof Error ? err.message : "Could not update cart");
-  } finally {
-    setLoading(false);
-  }
-};
+    
+    const previousCart = { ...cartItems };
+    const previousQuantity = cartItems[productId] || 0;
+    setLoading(true);
+
+    setCartItems((prev) => {
+      const updated = { ...prev };
+      if (quantity <= 0) delete updated[productId];
+      else updated[productId] = quantity;
+      return updated;
+    });
+
+    try {
+      await syncCart(productId, quantity);
+      
+      // Show appropriate toast based on the action
+      if (quantity === 0) {
+        toast.success("Item removed from cart");
+      } else if (quantity < previousQuantity) {
+        toast.success(`Quantity decreased to ${quantity}`);
+      } else if (quantity > previousQuantity) {
+        toast.success(`Quantity increased to ${quantity}`);
+      }
+    } catch (err) {
+      setCartItems(previousCart);
+      console.error("Failed to update cart quantity:", err);
+      toast.error(err instanceof Error ? err.message : "Could not update cart");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Don't render until initial fetch is complete to avoid hydration mismatches
   if (!isInitialized) {

@@ -48,9 +48,7 @@ export const createOrderSchema = z.object({
       })
     )
     .min(1, "Order must have at least one item"),
-  amount: z.number().positive("Amount must be positive"),
 });
-
 // Order status update (seller only)
 export const updateOrderStatusSchema = z.object({
   orderId: z.string().min(1, "Order ID is required"),

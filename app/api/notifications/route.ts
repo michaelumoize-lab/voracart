@@ -35,7 +35,9 @@ export async function PATCH(req: NextRequest) {
     let notificationId: string | undefined;
     try {
       const body = await req.json();
-      notificationId = body?.id;
+      if (typeof body?.id === "string") {
+        notificationId = body.id;
+      }
     } catch {
       // no body — mark all
     }

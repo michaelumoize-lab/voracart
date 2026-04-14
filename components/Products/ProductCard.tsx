@@ -20,28 +20,55 @@ export default function ProductCard({ product }: ProductCardProps) {
   const quantity = cartItems[product.id] || 0;
 
   const imageUrl = Array.isArray(product.image)
-    ? product.image[0] ?? "/placeholder-product.png"
+    ? (product.image[0] ?? "/placeholder-product.png")
     : product.image;
 
   const displayPrice = product.offerPrice ?? product.price ?? 0;
 
   const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    
+
     if (!product.id) {
       toast.error("Invalid product");
       return;
     }
-    
-    await addToCart(product.id);
+
+    try {
+      await addToCart(product.id);
+    } catch {
+      toast.error("Failed to add to cart");
+    }
+  };
+
+  const handleIncrease = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!product.id) {
+      toast.error("Invalid product");
+      return;
+    }
+    try {
+      await updateCartQuantity(product.id, quantity + 1);
+    } catch (error) {
+      console.error("Update cart failed:", error);
+      toast.error("Failed to update cart");
+    }
   };
 
   const handleDecrease = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (quantity > 1) {
-      await updateCartQuantity(product.id, quantity - 1);
-    } else {
-      await updateCartQuantity(product.id, 0);
+    if (!product.id) {
+      toast.error("Invalid product");
+      return;
+    }
+    try {
+      if (quantity > 1) {
+        await updateCartQuantity(product.id, quantity - 1);
+      } else {
+        await updateCartQuantity(product.id, 0);
+      }
+    } catch (error) {
+      console.error("Update cart failed:", error);
+      toast.error("Failed to update cart");
     }
   };
 
@@ -116,7 +143,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               {quantity}
             </span>
             <button
-              onClick={handleAddToCart}
+              onClick={handleIncrease}
               className="px-2.5 py-1.5 text-primary hover:bg-primary/10 transition font-bold"
             >
               +

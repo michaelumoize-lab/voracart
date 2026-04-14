@@ -21,8 +21,7 @@ export async function GET(req: NextRequest) {
     });
 
     return apiSuccess({ cart });
-  } catch {
-    console.error("Failed to fetch cart");
-    return apiError("Failed to fetch cart", 500);
-  }
+  } catch (error) {
+    console.error("Failed to fetch cart", error);
+    return apiError("Failed to fetch cart", 500);  }
 }
