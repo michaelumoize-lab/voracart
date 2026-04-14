@@ -21,7 +21,7 @@ export function GoogleIcon({
       height="1em"
       viewBox="0 0 256 262"
       aria-hidden={ariaHidden !== undefined ? ariaHidden : (isDecorative ? "true" : undefined)}
-      aria-labelledby={titleId}
+      aria-labelledby={title ? titleId : undefined}
       aria-label={ariaLabel}
       {...props}
     >

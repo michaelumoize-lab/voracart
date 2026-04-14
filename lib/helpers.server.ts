@@ -1,9 +1,7 @@
-// lib/auth/helpers.ts
-import { headers } from "next/headers";
+// lib/helpers.server.ts
 import { cache } from "react";
 import { auth } from "./auth";
 import { getServerSession } from "./get-session";
-import { authClient } from "./auth-client";
 
 // ============ SERVER-SIDE HELPERS ============
 
@@ -77,46 +75,18 @@ export const protectRoute = async (
  */
 export const getSessionWithRole = cache(async () => {
   const session = await getServerSession();
+  if (!session) {
+    return null;
+  }
+
   return {
     ...session,
     user: {
-      ...session?.user,
-      role: session?.user?.role as "buyer" | "seller" | "admin" | undefined,
+      ...session.user,
+      role: session.user?.role as "buyer" | "seller" | "admin" | undefined,
     },
   };
 });
-
-// ============ CLIENT-SIDE HELPERS ============
-
-/**
- * Client-side role checker hook
- */
-export function useRole() {
-  const { data: session, isPending, error, refetch } = authClient.useSession();
-  
-  return {
-    session,
-    user: session?.user,
-    role: session?.user?.role as "buyer" | "seller" | "admin" | undefined,
-    isAuthenticated: !!session,
-    isSeller: session?.user?.role === "seller",
-    isAdmin: session?.user?.role === "admin",
-    isBuyer: !session?.user?.role || session.user.role === "buyer",
-    isLoading: isPending,
-    error,
-    refetch,
-  };
-}
-
-/**
- * Client-side logout with redirect
- */
-export const logout = async (redirectTo?: string) => {
-  await authClient.signOut();
-  if (redirectTo) {
-    window.location.href = redirectTo;
-  }
-};
 
 // ============ API ROUTE HELPERS ============
 
@@ -165,7 +135,7 @@ export const getUserById = cache(async (userId: string) => {
 });
 
 /**
- * Update user role (admin only)
+ * Update user role (caller must enforce admin authorization)
  */
 export const updateUserRole = async (userId: string, role: "buyer" | "seller" | "admin") => {
   const { prisma } = await import("@/lib/prisma");

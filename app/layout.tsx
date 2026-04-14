@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { Oxanium, Merriweather, Fira_Code, Geist } from "next/font/google";
+import { Oxanium, Merriweather, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = Oxanium({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 const fontSerif = Merriweather({
   subsets: ["latin"],
   variable: "--font-serif",
+  weight: ["400", "700"],
 });
 
 const fontMono = Fira_Code({
@@ -30,10 +34,10 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", geist.variable)}
+      className={cn("font-sans", fontSans.variable, fontSerif.variable, fontMono.variable)}
     >
       <body
-        className={`${geist.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
+        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"

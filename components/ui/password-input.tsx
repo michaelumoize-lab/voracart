@@ -26,7 +26,7 @@ export function PasswordInput({
         aria-pressed={showPassword}
         disabled={disabled}
         tabIndex={disabled ? -1 : 0}
-        className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transform disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-muted-foreground hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 absolute top-1/2 right-3 -translate-y-1/2 transform rounded-sm disabled:pointer-events-none disabled:opacity-50"
       >
         {showPassword ? (
           <EyeOffIcon className="size-5" />

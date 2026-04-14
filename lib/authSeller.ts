@@ -5,7 +5,8 @@ const authSeller = async (): Promise<boolean> => {
     const session = await getServerSession();
     if (!session?.user) return false;
     return (session.user as { role?: string }).role === "seller";
-  } catch {
+  } catch (error) {
+    console.error('Error checking seller authorization:', error);
     return false;
   }
 };
