@@ -1,7 +1,13 @@
 // contexts/CartContext.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { toast } from "react-hot-toast";
 
 type CartItems = Record<string, number>;
@@ -49,17 +55,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!productId) {
       throw new Error("Product ID is required");
     }
-    
-    if (typeof quantity !== 'number' || isNaN(quantity)) {
+
+    if (typeof quantity !== "number" || isNaN(quantity)) {
       throw new Error(`Invalid quantity: ${quantity}`);
     }
-    
+
     const res = await fetch("/api/cart/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId, quantity }),
     });
-    
+
     if (!res.ok) {
       let message = "Cart update failed";
       try {
@@ -77,7 +83,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       toast.error("Invalid product");
       return;
     }
-    
+
     setLoading(true);
 
     const currentQty = cartItems[productId] || 0;
@@ -113,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       toast.error("Invalid product");
       return;
     }
-    
+
     const previousCart = { ...cartItems };
     const previousQuantity = cartItems[productId] || 0;
     setLoading(true);
@@ -127,7 +133,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await syncCart(productId, quantity);
-      
+
       // Show appropriate toast based on the action
       if (quantity === 0) {
         toast.success("Item removed from cart");
@@ -137,7 +143,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         toast.success(`Quantity increased to ${quantity}`);
       }
     } catch (err) {
-      setCartItems(previousCart);
+      setCartItems((prev) => {
+        const updated = { ...prev };
+        if (previousQuantity <= 0) {
+          delete updated[productId];
+        } else {
+          updated[productId] = previousQuantity;
+        }
+        return updated;
+      });
       console.error("Failed to update cart quantity:", err);
       toast.error(err instanceof Error ? err.message : "Could not update cart");
     } finally {
