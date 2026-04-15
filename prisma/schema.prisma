@@ -105,7 +105,7 @@ model Product {
 model SellerApplication {
   id          String    @id @default(cuid())
   userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeName   String
   phone       String
   description String?
@@ -142,6 +142,7 @@ enum NotificationType {
   APPLICATION_APPROVED
   APPLICATION_REJECTED
   NEW_APPLICATION
+  NEW_PRODUCT
 }
 
 model Notification {
@@ -175,12 +176,13 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Decimal  @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  itemStatus String   @default("PENDING") 
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])

@@ -12,12 +12,12 @@ export async function GET(request: NextRequest) {
   if (session.user.role !== "admin") return apiError("Admin access required", 403);
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20") || 20));
   const role = searchParams.get("role");
   const search = searchParams.get("search");
   const skip = (page - 1) * limit;
-
+  
   try {
     // Build where clause with proper typing
     const where: Prisma.UserWhereInput = {};
@@ -112,8 +112,16 @@ export async function PUT(request: NextRequest) {
       return apiError("You cannot change your own admin role", 400);
     }
 
+    const ALLOWED_ROLES = ["admin", "seller", "buyer"] as const;
     const updateData: Prisma.UserUpdateInput = {};
-    if (role) updateData.role = role;
+    
+    if (role) {
+      if (!ALLOWED_ROLES.includes(role as any)) {
+        return apiError("Invalid role value", 400);
+      }
+      updateData.role = role;
+    }
+    
     if (banned !== undefined) updateData.banned = banned;
     if (banReason !== undefined) updateData.banReason = banReason;
     if (banExpires !== undefined) updateData.banExpires = banExpires ? new Date(banExpires) : null;
@@ -137,6 +145,9 @@ export async function PUT(request: NextRequest) {
       message: role ? `User role updated to ${role}` : "User updated successfully",
     });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return apiError("User not found", 404);
+    }
     console.error("Error updating user:", error);
     return apiError("Failed to update user", 500);
   }

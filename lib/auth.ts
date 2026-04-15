@@ -19,6 +19,23 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          return {
+            data: {
+              ...user,
+              role: "buyer",
+            },
+          };
+        },
+      },
+    },
+  },
+
+
   emailAndPassword: {
     enabled: true,
   },
@@ -28,14 +45,11 @@ export const auth = betterAuth({
       clientSecret: GOOGLE_CLIENT_SECRET,
     },
   },
-
   user: {
     additionalFields: {
       role: {
-        type: "string",
-        input: false,
-        defaultValue: "buyer",
-        required: false,
+        type: ["buyer", "seller", "admin"], 
+        required: false, 
       },
     },
   },

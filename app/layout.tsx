@@ -50,7 +50,7 @@ export default function RootLayout({
           />
           <CartProvider>
           {children}
-          </CartProvider>
+          </CartProvider> 
         </ThemeProvider>
       </body>
     </html>

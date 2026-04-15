@@ -21,10 +21,10 @@ export async function createNotification({
 }: CreateNotificationParams): Promise<void> {
   try {
     await prisma.notification.create({
-      data: { 
-        userId, 
-        type, 
-        message, 
+      data: {
+        userId,
+        type,
+        message,
         link: link ?? null,
         read: false,
       },
@@ -101,10 +101,10 @@ export async function notifySellersOfNewOrder(
     // Find all distinct seller userIds from the order's items
     const orderItems = await prisma.orderItem.findMany({
       where: { orderId },
-      include: { 
-        product: { 
-          select: { userId: true, name: true } 
-        } 
+      include: {
+        product: {
+          select: { userId: true, name: true }
+        }
       },
     });
 
@@ -118,7 +118,7 @@ export async function notifySellersOfNewOrder(
           .filter((i) => i.product.userId === sellerId)
           .map((i) => i.product.name)
           .join(", ");
-        
+
         return createNotification({
           userId: sellerId,
           type: "NEW_ORDER",
@@ -180,7 +180,7 @@ export async function notifyAdminsOfNewApplication(
           userId: admin.id,
           type: "NEW_APPLICATION",
           message: `New seller application from ${applicantName || "a user"}`,
-          link: `/admin/applications/${applicationId}`,
+          link: "/admin/applications",
         })
       )
     );
@@ -206,7 +206,7 @@ export async function notifyApplicantOfDecision(
     userId: applicantUserId,
     type: approved ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED",
     message,
-    link: approved ? "/seller/dashboard" : "/seller/apply",
+    link: approved ? "/seller" : "/seller/apply",
   });
 }
 
@@ -219,7 +219,7 @@ export async function notifyProductCreated(
 ): Promise<void> {
   await createNotification({
     userId: sellerId,
-    type: "NEW_ORDER", // Reusing NEW_ORDER type or add a NEW_PRODUCT type
+    type: "NEW_PRODUCT",
     message: `Your product "${productName}" has been successfully listed`,
     link: "/seller/products",
   });

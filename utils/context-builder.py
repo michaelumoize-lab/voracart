@@ -65,8 +65,7 @@ def build_tree(root_path: str, prefix: str = "") -> list[str]:
         return [prefix + "[permission denied]"]
 
     dirs  = [e for e in entries if os.path.isdir(os.path.join(root_path, e))  and e not in EXCLUDED_DIRS and not e.startswith(".")]
-    files = [e for e in entries if os.path.isfile(os.path.join(root_path, e))]
-
+    files = [e for e in entries if os.path.isfile(os.path.join(root_path, e)) and not e.startswith(".")]
     all_entries = files + dirs
     for i, entry in enumerate(all_entries):
         is_last   = i == len(all_entries) - 1
@@ -104,9 +103,9 @@ def divider(char="=", width=64):
 
 def main():
     root = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.dirname(script_dir)  # Go up one level from utils/ to project root
     output_path = os.path.join(root, OUTPUT_FILE)
-    lines = []
-
     # ── Header ────────────────────────────────────────────────
     lines.append(divider())
     lines.append("  AI CONTEXT SNAPSHOT")

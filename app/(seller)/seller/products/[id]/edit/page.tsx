@@ -59,8 +59,7 @@ export default function EditProductPage() {
           price: Number(product.price),
           offerPrice: product.offerPrice ? Number(product.offerPrice) : null,
           stock: product.stock || 0,
-          image: typeof product.image === 'string' ? product.image : product.image[0],
-        });
+          image: typeof product.image === 'string' ? product.image : (product.image?.[0] || ""),        });
       } else {
         toast.error("Product not found");
         router.push("/seller/products");
@@ -68,6 +67,7 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Failed to fetch product:", error);
       toast.error("Failed to load product");
+        router.push("/seller/products");
     } finally {
       setLoading(false);
     }
@@ -123,26 +123,27 @@ export default function EditProductPage() {
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "price" || name === "offerPrice" || name === "stock"
-        ? value === "" ? null : Number(value)
-        : value,
-    }));
-  };
+ const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: name === "offerPrice"
+      ? (value === "" ? null : Number(value))
+      : name === "price" || name === "stock"
+      ? (value === "" ? 0 : Number(value))
+      : value,
+  }));
+};
 
-  if (roleLoading || loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+if (roleLoading || loading) {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
   return (
     <div className="max-w-2xl mx-auto p-6">
       {/* Header */}
@@ -263,12 +264,12 @@ export default function EditProductPage() {
           <button
             type="button"
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive rounded-lg hover:bg-destructive/10 transition"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive rounded-lg hover:bg-destructive/10 transition disabled:opacity-50"
           >
             <Trash2 className="w-4 h-4" />
             Delete
-          </button>
-          <div className="flex-1" />
+          </button>          <div className="flex-1" />
           <button
             type="button"
             onClick={() => router.back()}

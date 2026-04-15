@@ -64,12 +64,19 @@ export function SignUpForm() {
     setError(null);
 
     try {
-      const { error: signUpError } = await authClient.signUp.email({
+      const { data, error: signUpError } = await authClient.signUp.email({
         email,
         password,
         name,
         // callbackURL: "/email-verified",
       });
+
+      if (data?.user?.id) {
+        await fetch("/api/auth/set-role", {
+          method: "POST",
+          body: JSON.stringify({ userId: data.user.id }),
+        });
+      }
 
       if (signUpError) {
         const errorMessage = signUpError.message || "Something went wrong";

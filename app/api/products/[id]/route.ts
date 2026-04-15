@@ -45,7 +45,12 @@ export async function PUT(
   const { id } = await params;
   
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return apiError("Invalid JSON body", 400);
+    }
     
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -59,18 +64,25 @@ export async function PUT(
       return apiError("You can only edit your own products", 403);
     }
     
+    // Basic validation - consider using Zod for comprehensive schema validation
+    if (body.price !== undefined && (typeof body.price !== "number" || body.price < 0)) {
+      return apiError("Price must be a non-negative number", 400);
+    }
+    if (body.stock !== undefined && (typeof body.stock !== "number" || body.stock < 0 || !Number.isInteger(body.stock))) {
+      return apiError("Stock must be a non-negative integer", 400);
+    }
+    
     const product = await prisma.product.update({
       where: { id },
       data: {
-        name: body.name,
-        price: body.price,
-        description: body.description,
-        category: body.category,
-        offerPrice: body.offerPrice,
-        stock: body.stock,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.price !== undefined && { price: body.price }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.category !== undefined && { category: body.category }),
+        ...(body.offerPrice !== undefined && { offerPrice: body.offerPrice }),
+        ...(body.stock !== undefined && { stock: body.stock }),
       },
-    });
-    
+    });    
     return apiSuccess({ product });
   } catch (error) {
     console.error("Error updating product:", error);

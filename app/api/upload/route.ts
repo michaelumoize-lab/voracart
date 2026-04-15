@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file types
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     const invalidFile = files.find((file) => !allowedTypes.includes(file.type));
     if (invalidFile) {
       return apiError("Only JPEG, PNG, and WEBP images are allowed", 400);

@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "project": "app",
+    "generated_at": "2026-04-15T19:31:42",
+    "total_files": 52,
+    "total_folders": 56,
+    "excluded_dirs": [
+      ".cache",
+      ".git",
+      ".husky",
+      ".next",
+      ".turbo",
+      ".vercel",
+      "__pycache__",
+      "build",
+      "coverage",
+      "dist",
+      "node_modules",
+      "out"
+    ],
+    "excluded_extensions": [
+      ".lock",
+      ".log",
+      ".map"
+    ],
+    "excluded_files": [
+      ".DS_Store",
+      ".env.local",
+      ".env.production",
+      "Thumbs.db",
+      "desktop.ini"
+    ]
+  },
+  "structure": {
+    "__files__": [
+      "favicon.ico",
+      "files-folder-structure.py",
+      "globals.css",
+      "layout.tsx"
+    ],
+    "(admin)": {
+      "admin": {
+        "__files__": [
+          "layout.tsx",
+          "page.tsx"
+        ],
+        "applications": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "messages": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "orders": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "users": {
+          "__files__": [
+            "page.tsx"
+          ]
+        }
+      }
+    },
+    "(auth)": {
+      "__files__": [
+        "layout.tsx"
+      ],
+      "auth": {
+        "sign-in": {
+          "__files__": [
+            "page.tsx",
+            "sign-in-form.tsx"
+          ]
+        },
+        "sign-up": {
+          "__files__": [
+            "page.tsx",
+            "sign-up-form.tsx"
+          ]
+        }
+      }
+    },
+    "(cart)": {},
+    "(public)": {
+      "__files__": [
+        "layout.tsx"
+      ],
+      "(landing)": {
+        "__files__": [
+          "page.tsx"
+        ],
+        "[id]": {
+          "__files__": [
+            "ProductClient.tsx",
+            "page.tsx"
+          ]
+        },
+        "all-products": {
+          "__files__": [
+            "AllProductsClient.tsx",
+            "page.tsx"
+          ]
+        }
+      },
+      "become-seller": {
+        "__files__": [
+          "page.tsx"
+        ]
+      }
+    },
+    "(seller)": {
+      "seller": {
+        "__files__": [
+          "layout.tsx",
+          "page.tsx"
+        ],
+        "add-product": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "orders": {
+          "__files__": [
+            "page.tsx"
+          ],
+          "[id]": {
+            "__files__": [
+              "page.tsx"
+            ]
+          }
+        },
+        "products": {
+          "__files__": [
+            "page.tsx"
+          ],
+          "[id]": {
+            "__files__": [
+              "page.tsx"
+            ],
+            "edit": {
+              "__files__": [
+                "page.tsx"
+              ]
+            }
+          }
+        },
+        "settings": {
+          "__files__": [
+            "page.tsx"
+          ]
+        }
+      }
+    },
+    "api": {
+      "admin": {
+        "dashboard": {
+          "stats": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "users": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "auth": {
+        "[...all]": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "set-role": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "cart": {
+        "get": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "update": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "notifications": {
+        "__files__": [
+          "route.ts"
+        ]
+      },
+      "products": {
+        "__files__": [
+          "route.ts"
+        ],
+        "[id]": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "seller": {
+        "application": {
+          "status": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "counts": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "dashboard": {
+          "stats": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "orders": {
+          "__files__": [
+            "route.ts"
+          ],
+          "[id]": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "products": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "settings": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "seller-application": {
+        "admin": {
+          "list": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "review": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "apply": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "status": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "upload": {
+        "__files__": [
+          "route.ts"
+        ]
+      }
+    }
+  }
+}

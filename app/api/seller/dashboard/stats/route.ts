@@ -27,8 +27,7 @@ export async function GET(request: NextRequest) {
       });
 
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const uniqueOrders = new Set(orderItems.map(i => i.orderId));
+      const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));      const uniqueOrders = new Set(orderItems.map(i => i.orderId));
       const uniquePending = new Set(orderItems.filter(i => i.order.status === "PENDING").map(i => i.orderId));
       
       totalOrders = uniqueOrders.size;

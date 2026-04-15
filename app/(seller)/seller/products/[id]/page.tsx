@@ -1,4 +1,3 @@
-//app/(seller)/seller/products/[id]/page.tsx
 // app/(seller)/seller/products/[id]/page.tsx
 "use client";
 
@@ -27,6 +26,7 @@ export default function EditProductPage() {
   const { isSeller, isLoading: roleLoading } = useRole();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false); // ✅ Added deleting state
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
@@ -60,7 +60,7 @@ export default function EditProductPage() {
           price: Number(product.price),
           offerPrice: product.offerPrice ? Number(product.offerPrice) : null,
           stock: product.stock || 0,
-          image: typeof product.image === 'string' ? product.image : product.image[0],
+          image: typeof product.image === 'string' ? product.image : (product.image?.[0] ?? ""),
         });
       } else {
         toast.error("Product not found");
@@ -100,8 +100,15 @@ export default function EditProductPage() {
     }
   };
 
+  // ✅ Fixed delete handler with loading guard
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (deleting) return; // Prevent duplicate requests
+    
+    if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeleting(true);
 
     try {
       const res = await fetch(`/api/products/${params.id}`, {
@@ -118,6 +125,8 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Failed to delete product:", error);
       toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -126,11 +135,11 @@ export default function EditProductPage() {
     setFormData((prev) => ({
       ...prev,
       [name]: name === "price" || name === "offerPrice" || name === "stock" 
-        ? value === "" ? null : Number(value)
+        ? value === "" ? (name === "offerPrice" ? null : 0) : Number(value)
         : value,
     }));
   };
-
+  
   if (roleLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -146,12 +155,23 @@ export default function EditProductPage() {
           <h1 className="text-2xl font-bold text-foreground">Edit Product</h1>
           <p className="text-muted-foreground mt-1">Update your product information</p>
         </div>
+        {/* ✅ Delete button with loading state */}
         <button
           onClick={handleDelete}
-          className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive rounded-lg hover:bg-destructive/10 transition"
+          disabled={deleting}
+          className="flex items-center gap-2 px-4 py-2 text-destructive border border-destructive rounded-lg hover:bg-destructive/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Trash2 className="w-4 h-4" />
-          Delete
+          {deleting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </>
+          )}
         </button>
       </div>
 

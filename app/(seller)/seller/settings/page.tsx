@@ -31,15 +31,21 @@ export default function SellerSettings() {
   }, [isSeller, roleLoading, router]);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
+    if (!roleLoading && isSeller) {
+      fetchSettings();
+    }
+  }, [roleLoading, isSeller]);
   const fetchSettings = async () => {
     try {
       const res = await fetch("/api/seller/settings");
+      if (!res.ok) {
+        throw new Error(`HTTP error: ${res.status}`);
+      }
       const data = await res.json();
       if (data.success) {
         setSettings(data.data);
+      } else {
+        toast.error(data.message || "Failed to load settings");
       }
     } catch (error) {
       console.error("Failed to fetch settings:", error);
@@ -48,7 +54,6 @@ export default function SellerSettings() {
       setLoading(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -61,6 +66,12 @@ export default function SellerSettings() {
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Failed to update settings");
+        return;
+      }
+
       if (data.success) {
         toast.success("Settings updated successfully!");
       } else {
@@ -73,8 +84,9 @@ export default function SellerSettings() {
       setSaving(false);
     }
   };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name]: value }));
   };

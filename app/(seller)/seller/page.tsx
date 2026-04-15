@@ -57,14 +57,16 @@ export default function SellerDashboard() {
   }, [isSeller, isLoading, router]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (isSeller) {
+      fetchDashboardData();
+    }
+  }, [isSeller]);
 
   const fetchDashboardData = async () => {
     try {
       const [statsRes, ordersRes] = await Promise.all([
         fetch("/api/seller/dashboard/stats"),
-        fetch("/api/seller/orders?limit=5"), // Changed to use orders API with limit
+        fetch("/api/seller/orders?limit=5"),
       ]);
 
       const statsData = await statsRes.json();
@@ -255,7 +257,7 @@ export default function SellerDashboard() {
                 </div>
                 <div>
                   <p className="font-medium text-foreground">
-                    ₦{order.total.toLocaleString()}
+                    ₦{(order.total ?? 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-muted-foreground">{order.status}</p>
                 </div>

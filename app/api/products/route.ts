@@ -1,3 +1,4 @@
+// app/api/products/route.ts
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-helper";
 import { NextRequest } from "next/server";
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
         description: validated.description,
         userId: session.user.id,
         category: validated.category,
-        offerPrice: validated.offerPrice,
+        offerPrice: validated.offerPrice ?? null, // ✅ Handle optional
         stock: 0,
       },
     });
@@ -68,18 +69,18 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Create product error:", error);
     
+    // Handle Zod validation errors
     if (error instanceof ZodError) {
-      return apiError(error.issues[0].message, 400);
+      const message = error.issues.map((e) => e.message).join(", ");
+      return apiError(message, 400);
     }
-
+    
+    // Handle Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return apiError(`Database error: ${error.message}`, 500);
+      return apiError("Database error occurred", 500);
     }
     
-    if (error instanceof Error) {
-      return apiError(error.message, 500);
-    }
-    
-    return apiError("Failed to create product", 500);
+    // Handle generic errors
+    return apiError(error instanceof Error ? error.message : "Failed to create product", 500);
   }
 }

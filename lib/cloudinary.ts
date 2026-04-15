@@ -1,4 +1,5 @@
-import { v2 as cloudinary } from "cloudinary";
+// lib/cloudinary.ts
+import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -32,10 +33,61 @@ export const uploadImages = async (
 };
 
 export const deleteImage = async (publicId: string): Promise<void> => {
-  await cloudinary.uploader.destroy(publicId);
+  if (!publicId) {
+    console.error("No publicId provided for deletion");
+    return;
+  }
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("Failed to delete image:", error);
+    throw error;
+  }
 };
+
+/**
+ * Extract public ID from Cloudinary URL
+ * Example URL: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/subfolder/image.jpg
+ * Returns: folder/subfolder/image
+ */
 export const getPublicId = (url: string): string => {
-  const parts = url.split("/");
-  const filename = parts[parts.length - 1];
-  return filename.split(".")[0];
+  if (!url) return "";
+  
+  try {
+    // Parse the URL
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    
+    // Find "/upload/" in the path and get everything after it
+    const uploadIndex = pathname.indexOf("/upload/");
+    if (uploadIndex === -1) {
+      console.error("Invalid Cloudinary URL: missing '/upload/' segment");
+      return "";
+    }
+    
+    // Get the part after "/upload/"
+    let publicIdWithVersion = pathname.substring(uploadIndex + 8); // 8 is length of "/upload/"
+    
+    // Remove version prefix if present (e.g., "v1234567890/")
+    const versionMatch = publicIdWithVersion.match(/^v\d+\//);
+    if (versionMatch) {
+      publicIdWithVersion = publicIdWithVersion.substring(versionMatch[0].length);
+    }
+    
+    // Remove file extension (e.g., ".jpg", ".png", ".webp")
+    const lastDotIndex = publicIdWithVersion.lastIndexOf(".");
+    const publicId = lastDotIndex !== -1 
+      ? publicIdWithVersion.substring(0, lastDotIndex)
+      : publicIdWithVersion;
+    
+    return publicId;
+  } catch (error) {
+    console.error("Failed to parse Cloudinary URL:", error);
+    return "";
+  }
+};
+
+// Get public ID from uploaded result object (type-safe)
+export const getPublicIdFromUploadResult = (result: UploadApiResponse): string => {
+  return result.public_id;
 };

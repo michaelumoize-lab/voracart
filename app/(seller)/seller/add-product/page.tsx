@@ -1,7 +1,6 @@
-//app/(seller)/seller/add-products/page.tsx
 "use client";
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
 import toast from "react-hot-toast";
@@ -12,12 +11,43 @@ import type { ProductCategory } from "@/lib/constants";
 export default function AddProductForm() {
   const router = useRouter();
   const [files, setFiles] = useState<(File | undefined)[]>([]);
+  const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<ProductCategory>("Earphone");
   const [price, setPrice] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Clean up blob URLs when component unmounts or files change
+  useEffect(() => {
+    // Revoke previous URLs when component unmounts
+    return () => {
+      imageUrls.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [imageUrls]);
+
+  const handleFileChange =
+    (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
+      const newFile = e.target.files?.[0];
+      
+      // Revoke previous URL for this index if it exists
+      if (imageUrls[index]) {
+        URL.revokeObjectURL(imageUrls[index] as string);
+      }
+      
+      // Update files array
+      const updatedFiles = [...files];
+      updatedFiles[index] = newFile;
+      setFiles(updatedFiles);
+      
+      // Update image URLs array
+      const updatedUrls = [...imageUrls];
+      updatedUrls[index] = newFile ? URL.createObjectURL(newFile) : null;
+      setImageUrls(updatedUrls);
+    };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,6 +71,11 @@ export default function AddProductForm() {
         body: formData,
       });
 
+      if (!uploadRes.ok) {
+        toast.error("Image upload failed");
+        return;
+      }
+
       const uploadData = await uploadRes.json();
 
       if (!uploadData.success) {
@@ -48,7 +83,7 @@ export default function AddProductForm() {
         setLoading(false);
         return;
       }
-
+      
       // Create product - Using RESTful endpoint
       const productRes = await fetch("/api/products", {
         method: "POST",
@@ -58,10 +93,15 @@ export default function AddProductForm() {
           description,
           category,
           price: Number(price),
-          offerPrice: offerPrice ? Number(offerPrice) : undefined,
+          offerPrice: offerPrice !== "" ? Number(offerPrice) : undefined,
           image: uploadData.urls,
         }),
       });
+
+      if (!productRes.ok) {
+        toast.error("Failed to add product");
+        return;
+      }
 
       const productData = await productRes.json();
 
@@ -69,11 +109,18 @@ export default function AddProductForm() {
         toast.error(productData.message || "Failed to add product");
         return;
       }
-
+      
       toast.success("Product added successfully!");
+      router.refresh(); 
+      
+      // Clean up URLs before resetting
+      imageUrls.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
       
       // Reset form
       setFiles([]);
+      setImageUrls([]);
       setName("");
       setDescription("");
       setCategory("Earphone");
@@ -89,13 +136,6 @@ export default function AddProductForm() {
       setLoading(false);
     }
   };
-
-  const handleFileChange =
-    (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
-      const updated = [...files];
-      updated[index] = e.target.files?.[0];
-      setFiles(updated);
-    };
 
   return (
     <form onSubmit={handleSubmit} className="md:p-10 p-4 space-y-5 max-w-lg">
@@ -113,11 +153,7 @@ export default function AddProductForm() {
                 onChange={handleFileChange(index)}
               />
               <Image
-                src={
-                  files[index]
-                    ? URL.createObjectURL(files[index] as File)
-                    : assets.upload_area
-                }
+                src={imageUrls[index] || assets.upload_area}
                 alt="upload"
                 width={100}
                 height={100}

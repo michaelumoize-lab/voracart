@@ -1,10 +1,10 @@
 import os
 
 project_structure = {
-    "app/(main)/spirit/journal": ["page.tsx"],
-    "app/(main)/spirit/reflection": ["page.tsx"],
-    "app/(main)/spirit/prayer": ["page.tsx"],
-    "app/(main)/spirit/reflection": ["page.tsx"],
+    "app/(dashboard)": ["layout.tsx"],
+    "app/(dashboard)/account": ["page.tsx"],
+    "app/(dashboard)/my-orders": ["layout.tsx"],
+    "app/(dashboard)/add-address": ["page.tsx"],
 }
 
 def create_project_structure(base_path="."):

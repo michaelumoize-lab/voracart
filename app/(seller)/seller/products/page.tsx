@@ -15,13 +15,38 @@ const ProductList = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const currency = "₦";
 
+  // ✅ Fixed fetchProducts with proper HTTP status handling
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/seller/products");
+      
+      // ✅ Check HTTP status before parsing JSON
+      if (!res.ok) {
+        let errorMessage = "Failed to load products";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        toast.error(errorMessage);
+        setProducts([]);
+        return;
+      }
+
       const data = await res.json();
-      if (data.success) setProducts(data.products);
-    } catch {
+      
+      // ✅ Check success flag in response
+      if (data.success) {
+        setProducts(data.products);
+      } else {
+        toast.error(data.message || "Failed to load products");
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Fetch products error:", error);
       toast.error("Failed to load products");
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -30,14 +55,30 @@ const ProductList = () => {
   const handleDelete = async (productId: string) => {
     try {
       const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
+      
+      // ✅ Check HTTP status
+      if (!res.ok) {
+        let errorMessage = "Failed to delete product";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        toast.error(errorMessage);
+        return;
+      }
+
       const data = await res.json();
+      
       if (data.success) {
         toast.success("Product deleted");
         setProducts((prev) => prev.filter((p) => p.id !== productId));
       } else {
         toast.error(data.message || "Failed to delete product");
       }
-    } catch {
+    } catch (error) {
+      console.error("Delete error:", error);
       toast.error("Something went wrong");
     } finally {
       setDeleteConfirm(null);
@@ -96,7 +137,11 @@ const ProductList = () => {
                 <tr key={product.id} className="border-b border-border hover:bg-muted/30 transition">
                   <td className="py-3 pr-4">
                     <Image 
-                      src={typeof product.image === 'string' ? product.image : product.image[0]} 
+                      src={
+                        typeof product.image === 'string' 
+                          ? product.image 
+                          : (product.image?.[0] || '/placeholder-product.png')
+                      } 
                       alt={product.name} 
                       width={50} 
                       height={50} 

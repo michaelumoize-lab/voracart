@@ -1,8 +1,8 @@
-//app/(admin)/applications/page.tsx
+//app/(admin)/admin/applications/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { CheckCircle, XCircle, Eye, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Clock, Loader2 } from "lucide-react";
 
 interface Application {
   id: string;
@@ -21,13 +21,23 @@ interface Application {
 const SellerApplications = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [filter, setFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const [processingId, setProcessingId] = useState<string | null>(null); // ✅ Added processing state
+  const [filter, setFilter] = useState<
+    "ALL" | "PENDING" | "APPROVED" | "REJECTED"
+  >("PENDING");
 
   const fetchApplications = async (): Promise<void> => {
     try {
-      const res = await fetch("/api/admin/applications?status=pending");
+      const res = await fetch("/api/seller-application/admin/list");
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
       const data = await res.json();
-      if (data.success) setApplications(data.applications);
+      if (data.success) {
+        setApplications(data.applications);
+      } else {
+        toast.error(data.message || "Failed to load applications");
+      }
     } catch {
       toast.error("Failed to load applications");
     } finally {
@@ -35,16 +45,34 @@ const SellerApplications = () => {
     }
   };
 
+  // ✅ Fixed handleReview with duplicate click prevention and proper error handling
   const handleReview = async (
     applicationId: string,
-    status: "APPROVED" | "REJECTED"
+    status: "APPROVED" | "REJECTED",
   ): Promise<void> => {
+    // Prevent duplicate submissions
+    if (processingId === applicationId) return;
+
+    setProcessingId(applicationId);
+
     try {
-      const res = await fetch(`/api/admin/applications/${applicationId}`, {
+      const res = await fetch("/api/seller-application/admin/review", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ applicationId, status }),
       });
+
+      if (!res.ok) {
+        let errorMessage = `Failed to ${status.toLowerCase()} application`;
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       const data = await res.json();
 
@@ -52,16 +80,23 @@ const SellerApplications = () => {
         toast.success(
           status === "APPROVED"
             ? "Application approved! User is now a seller."
-            : "Application rejected."
+            : "Application rejected.",
         );
         setApplications((prev) =>
-          prev.map((a) => (a.id === applicationId ? { ...a, status } : a))
+          prev.map((a) => (a.id === applicationId ? { ...a, status } : a)),
         );
       } else {
-        toast.error(data.message || "Failed to update application");
+        toast.error(
+          data.message || `Failed to ${status.toLowerCase()} application`,
+        );
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (error) {
+      console.error("Review error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -96,7 +131,9 @@ const SellerApplications = () => {
   return (
     <div className="flex-1 p-4 md:p-10">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Seller Applications</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          Seller Applications
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Review and approve seller applications
         </p>
@@ -152,7 +189,8 @@ const SellerApplications = () => {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Applied {new Date(application.createdAt).toLocaleDateString()}
+                    Applied{" "}
+                    {new Date(application.createdAt).toLocaleDateString()}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Phone: {application.phone}
@@ -169,16 +207,26 @@ const SellerApplications = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleReview(application.id, "APPROVED")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition"
+                      disabled={processingId === application.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <CheckCircle className="w-3.5 h-3.5" />
+                      {processingId === application.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      )}
                       Approve
                     </button>
                     <button
                       onClick={() => handleReview(application.id, "REJECTED")}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition"
+                      disabled={processingId === application.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <XCircle className="w-3.5 h-3.5" />
+                      {processingId === application.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <XCircle className="w-3.5 h-3.5" />
+                      )}
                       Reject
                     </button>
                   </div>

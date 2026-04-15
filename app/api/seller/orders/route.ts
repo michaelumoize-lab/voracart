@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       prisma.order.findMany({
         where,
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true } }, // ✅ Removed email - PII protection
           items: {
             include: { product: { select: { id: true, name: true, image: true, price: true } } },
             where: { productId: { in: productIds } },
@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
     const formattedOrders = orders.map((order) => ({
       id: order.id,
       customerName: order.user?.name || "Guest",
-      customerEmail: order.user?.email,
       status: order.status,
       createdAt: order.createdAt,
       itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),

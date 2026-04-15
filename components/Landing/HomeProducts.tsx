@@ -51,7 +51,7 @@ if (loading) {
 
         {products.length > 0 && (
           <Link
-            href="/all-products"
+            href="/products"
             className="group hidden md:inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
           >
             View all
@@ -86,7 +86,7 @@ if (loading) {
         <>
           <div className="mt-10 flex justify-center md:hidden">
             <Link
-              href="/all-products"
+              href="/products"
               className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
             >
               See all products
@@ -96,7 +96,7 @@ if (loading) {
 
           <div className="mt-12 hidden md:flex flex-col items-center gap-2">
             <Link
-              href="/all-products"
+              href="/products"
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-background px-10 py-3 text-sm font-semibold text-foreground shadow-sm transition-all hover:border-primary hover:text-primary hover:shadow-md active:scale-95"
             >
               Explore all products

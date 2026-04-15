@@ -1,4 +1,4 @@
-// components/CategoryFilter.tsx - Separate file
+// components/Products/CategoryFilter.tsx
 "use client";
 
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
