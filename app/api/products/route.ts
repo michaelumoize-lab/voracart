@@ -3,8 +3,10 @@ import { apiSuccess, apiError } from "@/lib/api-helper";
 import { NextRequest } from "next/server";
 import { createProductSchema } from "@/lib/schemas";
 import { getServerSession } from "@/lib/get-session";
+import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
-// GET - Fetch products (keep only ONE)
+// GET - Fetch products
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const MAX_LIMIT = 100;
@@ -12,6 +14,7 @@ export async function GET(request: NextRequest) {
   const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 
     ? 50 
     : Math.min(parsedLimit, MAX_LIMIT);  
+  
   try {
     const products = await prisma.product.findMany({
       take: limit,
@@ -49,9 +52,10 @@ export async function POST(request: NextRequest) {
     const validated = createProductSchema.parse(body);
     
     const product = await prisma.product.create({
-        image: validated.image[0] ?? "", // Fallback or throw if required        name: validated.name,
+      data: {
+        name: validated.name,
         price: validated.price,
-        image: validated.image[0], // Take first image if array
+        image: validated.image[0] ?? "",
         description: validated.description,
         userId: session.user.id,
         category: validated.category,
@@ -61,12 +65,21 @@ export async function POST(request: NextRequest) {
     });
     
     return apiSuccess({ product }, 201);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create product error:", error);
     
-    if (error.name === "ZodError") {
+    if (error instanceof ZodError) {
       return apiError(error.issues[0].message, 400);
     }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return apiError(`Database error: ${error.message}`, 500);
+    }
+    
+    if (error instanceof Error) {
+      return apiError(error.message, 500);
+    }
+    
     return apiError("Failed to create product", 500);
   }
 }

@@ -1,4 +1,3 @@
-// components/NavbarClient.tsx (updated)
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef } from "react";
@@ -13,6 +12,8 @@ import {
   LogOut,
   LayoutDashboard,
   ChevronDown,
+  Store,
+  Shield,
 } from "lucide-react";
 import type { Session } from "@/lib/auth";
 import NotificationBell from "./NotificationBell";
@@ -22,6 +23,8 @@ interface Props {
   session: Session | null;
   role: string;
   isSeller: boolean;
+  isAdmin?: boolean;        
+  hasPendingApplication?: boolean;  
 }
 
 const NAV_LINKS = [
@@ -31,10 +34,16 @@ const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-export default function NavbarClient({ session, role, isSeller }: Props) {
+export default function NavbarClient({ 
+  session, 
+  role, 
+  isSeller, 
+  isAdmin = false,
+  hasPendingApplication = false 
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { cartCount } = useCart(); // ✅ Get cartCount directly from hook
+  const { cartCount } = useCart();
   const user = session?.user;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -74,6 +83,15 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
     });
   };
 
+  // Determine dashboard link based on role
+  const getDashboardLink = () => {
+    if (isAdmin) return "/admin";
+    if (isSeller) return "/seller";
+    return null;
+  };
+
+  const dashboardLink = getDashboardLink();
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -103,20 +121,6 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
               </Link>
             );
           })}
-
-          {isSeller && (
-            <Link
-              href="/seller"
-              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-                pathname.startsWith("/seller")
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              }`}
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Seller Dashboard
-            </Link>
-          )}
         </div>
 
         {/* Right side */}
@@ -182,6 +186,7 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
                   </div>
 
                   <div className="p-1.5 flex flex-col gap-0.5">
+                    {/* Account link - always shown */}
                     <Link
                       href="/account"
                       onClick={() => setDropdownOpen(false)}
@@ -191,6 +196,7 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
                       Account
                     </Link>
 
+                    {/* My Orders - always shown for logged in users */}
                     <Link
                       href="/my-orders"
                       onClick={() => setDropdownOpen(false)}
@@ -200,7 +206,19 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
                       My Orders
                     </Link>
 
-                    {isSeller && (
+                    {/* Conditional Dashboard Links based on role */}
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                      >
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    {isSeller && !isAdmin && (
                       <Link
                         href="/seller"
                         onClick={() => setDropdownOpen(false)}
@@ -209,6 +227,26 @@ export default function NavbarClient({ session, role, isSeller }: Props) {
                         <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
                         Seller Dashboard
                       </Link>
+                    )}
+
+                    {/* Become a Seller - only for buyers without pending application */}
+                    {!isSeller && !isAdmin && !hasPendingApplication && (
+                      <Link
+                        href="/become-seller"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                      >
+                        <Store className="h-4 w-4 text-muted-foreground" />
+                        Become a Seller
+                      </Link>
+                    )}
+
+                    {/* Pending Application - show disabled state */}
+                    {!isSeller && !isAdmin && hasPendingApplication && (
+                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground opacity-60">
+                        <Store className="h-4 w-4" />
+                        Application Pending
+                      </div>
                     )}
                   </div>
 
