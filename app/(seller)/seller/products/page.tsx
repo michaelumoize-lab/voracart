@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Product } from "@/types";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import EmptyState, { ProductsEmptyIcon } from "@/components/Products/EmptyState";
+import EmptyState, {
+  ProductsEmptyIcon,
+} from "@/components/Products/EmptyState";
 import { SellerProductSkeleton } from "@/components/Products/ProductsSkeletons";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Eye } from "lucide-react";
@@ -13,13 +15,16 @@ const ProductList = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null,
+  );
   const currency = "₦";
 
   // ✅ Fixed fetchProducts with proper HTTP status handling
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/seller/products");
-      
+
       // ✅ Check HTTP status before parsing JSON
       if (!res.ok) {
         let errorMessage = "Failed to load products";
@@ -35,7 +40,7 @@ const ProductList = () => {
       }
 
       const data = await res.json();
-      
+
       // ✅ Check success flag in response
       if (data.success) {
         setProducts(data.products);
@@ -53,9 +58,12 @@ const ProductList = () => {
   };
 
   const handleDelete = async (productId: string) => {
+    setDeletingProductId(productId);
     try {
-      const res = await fetch(`/api/products/${productId}`, { method: "DELETE" });
-      
+      const res = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+
       // ✅ Check HTTP status
       if (!res.ok) {
         let errorMessage = "Failed to delete product";
@@ -70,7 +78,7 @@ const ProductList = () => {
       }
 
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success("Product deleted");
         setProducts((prev) => prev.filter((p) => p.id !== productId));
@@ -82,10 +90,13 @@ const ProductList = () => {
       toast.error("Something went wrong");
     } finally {
       setDeleteConfirm(null);
+      setDeletingProductId(null);
     }
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   if (loading) {
     return (
@@ -134,38 +145,54 @@ const ProductList = () => {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product.id} className="border-b border-border hover:bg-muted/30 transition">
+                <tr
+                  key={product.id}
+                  className="border-b border-border hover:bg-muted/30 transition"
+                >
                   <td className="py-3 pr-4">
-                    <Image 
+                    <Image
                       src={
-                        typeof product.image === 'string' 
-                          ? product.image 
-                          : (product.image?.[0] || '/placeholder-product.png')
-                      } 
-                      alt={product.name} 
-                      width={50} 
-                      height={50} 
-                      className="rounded object-cover w-12 h-12" 
+                        typeof product.image === "string"
+                          ? product.image
+                          : product.image?.[0] || "/placeholder-product.png"
+                      }
+                      alt={product.name}
+                      width={50}
+                      height={50}
+                      className="rounded object-cover w-12 h-12"
                     />
                   </td>
-                  <td className="py-3 pr-4 font-medium text-foreground">{product.name}</td>
-                  <td className="py-3 pr-4 text-muted-foreground">{product.category}</td>
-                  <td className="py-3 pr-4 text-muted-foreground">{currency}{Number(product.price).toLocaleString()}</td>
+                  <td className="py-3 pr-4 font-medium text-foreground">
+                    {product.name}
+                  </td>
+                  <td className="py-3 pr-4 text-muted-foreground">
+                    {product.category}
+                  </td>
+                  <td className="py-3 pr-4 text-muted-foreground">
+                    {currency}
+                    {Number(product.price).toLocaleString()}
+                  </td>
                   <td className="py-3 pr-4 text-primary font-medium">
-                    {product.offerPrice ? `${currency}${Number(product.offerPrice).toLocaleString()}` : "-"}
+                    {product.offerPrice
+                      ? `${currency}${Number(product.offerPrice).toLocaleString()}`
+                      : "-"}
                   </td>
                   <td className="py-3">
                     {deleteConfirm === product.id ? (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleDelete(product.id)}
-                          className="px-3 py-1 text-xs bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition"
+                          disabled={deletingProductId === product.id}
+                          className="px-3 py-1 text-xs bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Confirm
+                          {deletingProductId === product.id
+                            ? "Deleting..."
+                            : "Confirm"}
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(null)}
-                          className="px-3 py-1 text-xs border border-border rounded hover:bg-muted transition"
+                          disabled={deletingProductId === product.id}
+                          className="px-3 py-1 text-xs border border-border rounded hover:bg-muted transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Cancel
                         </button>
@@ -173,7 +200,9 @@ const ProductList = () => {
                     ) : (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => router.push(`/seller/products/${product.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/seller/products/${product.id}/edit`)
+                          }
                           className="p-1.5 text-muted-foreground hover:text-primary transition"
                           aria-label="Edit"
                         >

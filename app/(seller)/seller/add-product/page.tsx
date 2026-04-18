@@ -32,17 +32,17 @@ export default function AddProductForm() {
   const handleFileChange =
     (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
       const newFile = e.target.files?.[0];
-      
+
       // Revoke previous URL for this index if it exists
       if (imageUrls[index]) {
         URL.revokeObjectURL(imageUrls[index] as string);
       }
-      
+
       // Update files array
       const updatedFiles = [...files];
       updatedFiles[index] = newFile;
       setFiles(updatedFiles);
-      
+
       // Update image URLs array
       const updatedUrls = [...imageUrls];
       updatedUrls[index] = newFile ? URL.createObjectURL(newFile) : null;
@@ -58,8 +58,28 @@ export default function AddProductForm() {
 
       if (imageFiles.length === 0) {
         toast.error("Please add at least one product image");
-        setLoading(false);
         return;
+      }
+
+      const numericPrice = Number(price);
+      const numericOfferPrice =
+        offerPrice !== "" ? Number(offerPrice) : undefined;
+
+      if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        toast.error("Please enter a valid price greater than zero");
+        return;
+      }
+
+      if (numericOfferPrice !== undefined) {
+        if (!Number.isFinite(numericOfferPrice) || numericOfferPrice <= 0) {
+          toast.error("Please enter a valid offer price");
+          return;
+        }
+
+        if (numericOfferPrice >= numericPrice) {
+          toast.error("Offer price must be less than the regular price");
+          return;
+        }
       }
 
       // Upload images
@@ -83,7 +103,7 @@ export default function AddProductForm() {
         setLoading(false);
         return;
       }
-      
+
       // Create product - Using RESTful endpoint
       const productRes = await fetch("/api/products", {
         method: "POST",
@@ -92,8 +112,8 @@ export default function AddProductForm() {
           name,
           description,
           category,
-          price: Number(price),
-          offerPrice: offerPrice !== "" ? Number(offerPrice) : undefined,
+          price: numericPrice,
+          offerPrice: numericOfferPrice,
           image: uploadData.urls,
         }),
       });
@@ -109,15 +129,15 @@ export default function AddProductForm() {
         toast.error(productData.message || "Failed to add product");
         return;
       }
-      
+
       toast.success("Product added successfully!");
-      router.refresh(); 
-      
+      router.refresh();
+
       // Clean up URLs before resetting
       imageUrls.forEach((url) => {
         if (url) URL.revokeObjectURL(url);
       });
-      
+
       // Reset form
       setFiles([]);
       setImageUrls([]);
@@ -126,7 +146,7 @@ export default function AddProductForm() {
       setCategory("Earphone");
       setPrice("");
       setOfferPrice("");
-      
+
       // Optional: Redirect to seller products page
       // router.push("/seller/products");
     } catch (error) {

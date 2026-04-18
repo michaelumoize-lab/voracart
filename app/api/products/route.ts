@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const MAX_LIMIT = 100;
   const parsedLimit = parseInt(searchParams.get("limit") || "50", 10);
-  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 
-    ? 50 
-    : Math.min(parsedLimit, MAX_LIMIT);  
-  
+  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1
+    ? 50
+    : Math.min(parsedLimit, MAX_LIMIT);
+
   try {
     const products = await prisma.product.findMany({
       take: limit,
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-    
+
     return apiSuccess({ products });
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
-  
+
   // Only sellers and admins can create products
   if (session.user.role !== "seller" && session.user.role !== "admin") {
     return apiError("Only sellers can create products", 403);
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = createProductSchema.parse(body);
-    
+
     const product = await prisma.product.create({
       data: {
         name: validated.name,
@@ -64,22 +64,22 @@ export async function POST(request: NextRequest) {
         stock: 0,
       },
     });
-    
+
     return apiSuccess({ product }, 201);
   } catch (error) {
     console.error("Create product error:", error);
-    
+
     // Handle Zod validation errors
     if (error instanceof ZodError) {
       const message = error.issues.map((e) => e.message).join(", ");
       return apiError(message, 400);
     }
-    
+
     // Handle Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return apiError("Database error occurred", 500);
     }
-    
+
     // Handle generic errors
     return apiError(error instanceof Error ? error.message : "Failed to create product", 500);
   }

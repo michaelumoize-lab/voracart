@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useTransition, useEffect, useLayoutEffect, useRef } from "react";
+import React, {
+  useState,
+  useTransition,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -20,7 +26,7 @@ import NotificationBell from "@/components/Landing/NotificationBell";
 import { useCart } from "@/hooks/useCart";
 import Image from "next/image";
 import { useClientSession } from "@/lib/use-session-client";
-import ModeToggle from "@/components/ui/mode-toggle"
+import ModeToggle from "@/components/ui/mode-toggle";
 
 interface NavbarClientProps {
   prefetchedSession?: Session | null;
@@ -141,7 +147,8 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
   const isSeller = role === "seller";
   const isAdmin = role === "admin";
   const hasPendingApplication =
-    (user as { hasPendingApplication?: boolean } | null)?.hasPendingApplication ?? false;
+    (user as { hasPendingApplication?: boolean } | null)
+      ?.hasPendingApplication ?? false;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -149,18 +156,24 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
- useLayoutEffect(() => {
-  //eslint-disable-next-line react-hooks/exhaustive-deps
-  setDropdownOpen(false);
-  setMobileMenuOpen(false);
-}, [pathname]);
+  // Close any open menus when the route changes.
+  useLayoutEffect(() => {
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setDropdownOpen(false);
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node)
+      ) {
         setMobileMenuOpen(false);
       }
     }
@@ -184,7 +197,6 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-
         {/* Logo */}
         <Link href="/" className="shrink-0 text-xl font-bold text-primary">
           VoraCart
@@ -214,14 +226,14 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
 
           {/* Role-based link — hidden while loading to prevent flash */}
           {!!session && (
-  <DashboardNavLink
-    isAdmin={isAdmin}
-    isSeller={isSeller}
-    hasPendingApplication={hasPendingApplication}
-    pathname={pathname}
-    user={!!user}
-  />
-)}
+            <DashboardNavLink
+              isAdmin={isAdmin}
+              isSeller={isSeller}
+              hasPendingApplication={hasPendingApplication}
+              pathname={pathname}
+              user={!!user}
+            />
+          )}
         </div>
 
         {/* Right side */}
@@ -278,8 +290,12 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
                 <div className="absolute right-0 mt-2 w-60 rounded-xl border border-border bg-card shadow-lg ring-1 ring-black/5">
                   {/* User info */}
                   <div className="px-4 py-3 border-b border-border">
-                    <p className="text-sm font-semibold truncate">{user.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <p className="text-sm font-semibold truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
                     <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
                       {role}
                     </span>
@@ -364,7 +380,11 @@ export default function NavbarClient({ prefetchedSession }: NavbarClientProps) {
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle mobile menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>

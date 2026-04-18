@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useClientSession } from "@/lib/use-session-client";
 import { toast } from "react-hot-toast";
 
@@ -48,6 +54,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const syncCart = async (productId: string, quantity: number) => {
     if (!productId) throw new Error("Product ID required");
+    if (!session?.user)
+      throw new Error("You must be signed in to update your cart");
+
     const res = await fetch("/api/cart/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,7 +64,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
     if (!res.ok) {
       let msg = "Cart update failed";
-      try { const d = await res.json(); msg = d.message || msg; } catch {}
+      try {
+        const d = await res.json();
+        msg = d.message || msg;
+      } catch {}
       throw new Error(msg);
     }
   };
@@ -68,13 +80,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const currentQty = cartItems[productId] || 0;
     const newQty = currentQty + 1;
     // Optimistic update
-    setCartItems(prev => ({ ...prev, [productId]: newQty }));
+    setCartItems((prev) => ({ ...prev, [productId]: newQty }));
     try {
       await syncCart(productId, newQty);
       toast.success("Added to cart!");
     } catch (err) {
       // Revert
-      setCartItems(prev => {
+      setCartItems((prev) => {
         const updated = { ...prev };
         const reverted = (updated[productId] || 1) - 1;
         if (reverted <= 0) delete updated[productId];
@@ -92,7 +104,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
     const prevQty = cartItems[productId] || 0;
     // Optimistic update
-    setCartItems(prev => {
+    setCartItems((prev) => {
       const updated = { ...prev };
       if (quantity <= 0) delete updated[productId];
       else updated[productId] = quantity;
@@ -101,17 +113,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       await syncCart(productId, quantity);
       if (quantity === 0) toast.success("Item removed");
-      else if (quantity < prevQty) toast.success(`Quantity decreased to ${quantity}`);
-      else if (quantity > prevQty) toast.success(`Quantity increased to ${quantity}`);
+      else if (quantity < prevQty)
+        toast.success(`Quantity decreased to ${quantity}`);
+      else if (quantity > prevQty)
+        toast.success(`Quantity increased to ${quantity}`);
     } catch (err) {
       // Revert
-      setCartItems(prev => ({ ...prev, [productId]: prevQty }));
+      setCartItems((prev) => ({ ...prev, [productId]: prevQty }));
       toast.error(err instanceof Error ? err.message : "Could not update cart");
     }
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, cartCount, loading: loading || sessionLoading, addToCart, updateCartQuantity, refreshCart: fetchCart }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        cartCount,
+        loading: loading || sessionLoading,
+        addToCart,
+        updateCartQuantity,
+        refreshCart: fetchCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

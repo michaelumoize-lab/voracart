@@ -43,35 +43,58 @@ export default function EditProductPage() {
   }, [isSeller, roleLoading, router]);
 
   useEffect(() => {
-    fetchProduct();
-  }, [params.id]);
-
-  const fetchProduct = async () => {
-    try {
-      const res = await fetch(`/api/products/${params.id}`);
-      const data = await res.json();
-      if (data.success) {
-        const product = data.product;
-        setFormData({
-          name: product.name,
-          description: product.description || "",
-          category: product.category,
-          price: Number(product.price),
-          offerPrice: product.offerPrice ? Number(product.offerPrice) : null,
-          stock: product.stock || 0,
-          image: typeof product.image === 'string' ? product.image : (product.image?.[0] || ""),        });
-      } else {
-        toast.error("Product not found");
-        router.push("/seller/products");
-      }
-    } catch (error) {
-      console.error("Failed to fetch product:", error);
-      toast.error("Failed to load product");
-        router.push("/seller/products");
-    } finally {
-      setLoading(false);
+    if (!params.id || typeof params.id !== "string") {
+      router.push("/seller/products");
+      return;
     }
-  };
+
+    const abortController = new AbortController();
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${params.id}`, {
+          signal: abortController.signal,
+        });
+
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(body || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          const product = data.product;
+          setFormData({
+            name: product.name,
+            description: product.description || "",
+            category: product.category,
+            price: Number(product.price),
+            offerPrice: product.offerPrice ? Number(product.offerPrice) : null,
+            stock: product.stock ?? 0,
+            image:
+              typeof product.image === "string"
+                ? product.image
+                : product.image?.[0] || "",
+          });
+        } else {
+          throw new Error(data.message || "Product not found");
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+        console.error("Failed to fetch product:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load product",
+        );
+        router.push("/seller/products");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+    return () => abortController.abort();
+  }, [params.id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +123,12 @@ export default function EditProductPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this product? This action cannot be undone.",
+      )
+    )
+      return;
 
     setSaving(true);
     try {
@@ -123,27 +151,34 @@ export default function EditProductPage() {
     }
   };
 
- const handleChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
-  setFormData((prev) => ({
-    ...prev,
-    [name]: name === "offerPrice"
-      ? (value === "" ? null : Number(value))
-      : name === "price" || name === "stock"
-      ? (value === "" ? 0 : Number(value))
-      : value,
-  }));
-};
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "offerPrice"
+          ? value === ""
+            ? null
+            : Number(value)
+          : name === "price" || name === "stock"
+            ? value === ""
+              ? 0
+              : Number(value)
+            : value,
+    }));
+  };
 
-if (roleLoading || loading) {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
-}
+  if (roleLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   return (
     <div className="max-w-2xl mx-auto p-6">
       {/* Header */}
@@ -156,7 +191,9 @@ if (roleLoading || loading) {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Edit Product</h1>
-          <p className="text-muted-foreground mt-1">Update your product information</p>
+          <p className="text-muted-foreground mt-1">
+            Update your product information
+          </p>
         </div>
       </div>
 
@@ -164,7 +201,9 @@ if (roleLoading || loading) {
         {/* Image Preview */}
         {formData.image && (
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Product Image</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Product Image
+            </label>
             <div className="relative w-32 h-32">
               <Image
                 src={formData.image}
@@ -178,7 +217,9 @@ if (roleLoading || loading) {
 
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Product Name *</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Product Name *
+          </label>
           <input
             type="text"
             name="name"
@@ -191,7 +232,9 @@ if (roleLoading || loading) {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Description</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Description
+          </label>
           <textarea
             name="description"
             value={formData.description}
@@ -203,7 +246,9 @@ if (roleLoading || loading) {
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Category *</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Category *
+          </label>
           <select
             name="category"
             value={formData.category}
@@ -212,18 +257,22 @@ if (roleLoading || loading) {
             className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {PRODUCT_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
         </div>
 
         {/* Price */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Price *</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Price *
+          </label>
           <input
             type="number"
             name="price"
-            value={formData.price || ""}
+            value={formData.price}
             onChange={handleChange}
             required
             min="0"
@@ -234,11 +283,13 @@ if (roleLoading || loading) {
 
         {/* Offer Price */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Offer Price (Optional)</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Offer Price (Optional)
+          </label>
           <input
             type="number"
             name="offerPrice"
-            value={formData.offerPrice || ""}
+            value={formData.offerPrice ?? ""}
             onChange={handleChange}
             min="0"
             step="0.01"
@@ -248,11 +299,13 @@ if (roleLoading || loading) {
 
         {/* Stock */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Stock Quantity</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Stock Quantity
+          </label>
           <input
             type="number"
             name="stock"
-            value={formData.stock || ""}
+            value={formData.stock}
             onChange={handleChange}
             min="0"
             className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -269,7 +322,8 @@ if (roleLoading || loading) {
           >
             <Trash2 className="w-4 h-4" />
             Delete
-          </button>          <div className="flex-1" />
+          </button>{" "}
+          <div className="flex-1" />
           <button
             type="button"
             onClick={() => router.back()}
@@ -282,7 +336,11 @@ if (roleLoading || loading) {
             disabled={saving}
             className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition disabled:opacity-50"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>

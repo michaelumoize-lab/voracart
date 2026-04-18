@@ -5,17 +5,17 @@ import type { Product } from "@/types";
 import AllProductsClient from "./AllProductsClient";
 
 interface PageProps {
-  searchParams: Promise<{
+  searchParams: {
     category?: string;
     search?: string;
     sort?: string;
     page?: string;
-  }>;
+  };
 }
 
-export default async function AllProducts({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const page = Math.max(1, parseInt(params.page || "1"));
+export default async function AllProducts({ searchParams: params }: PageProps) {
+  const pageValue = Number(params.page);
+  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   const limit = 20;
   const skip = (page - 1) * limit;
 

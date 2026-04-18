@@ -13,7 +13,7 @@ import {
   Package,
   Clock,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -35,6 +35,7 @@ export default function AdminDashboard() {
   const { isAdmin, isLoading } = useRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -43,17 +44,31 @@ export default function AdminDashboard() {
   }, [isAdmin, isLoading, router]);
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+    if (!isLoading && isAdmin) {
+      fetchDashboardStats();
+    }
+  }, [isAdmin, isLoading]);
 
   const fetchDashboardStats = async () => {
     try {
       const res = await fetch("/api/admin/dashboard/stats");
+      if (!res.ok) {
+        const body = await res.text();
+        const message = body ? body : `HTTP ${res.status}`;
+        throw new Error(message);
+      }
       const data = await res.json();
       if (data.success) {
         setStats(data.data);
+      } else {
+        throw new Error(data.message || "Failed to load dashboard stats");
       }
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch dashboard stats";
+      setError(message);
       console.error("Failed to fetch dashboard stats:", error);
     } finally {
       setLoading(false);
@@ -147,6 +162,12 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {statCards.map((card) => {
@@ -189,9 +210,7 @@ export default function AdminDashboard() {
                   <Icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    {stat.title}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
                   <p className="text-xl font-bold text-foreground">
                     {stat.value}
                   </p>
@@ -249,7 +268,7 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/analytics"
+            href="/admin/messages"
             className="flex flex-col items-center p-4 rounded-lg border border-border hover:bg-accent transition"
           >
             <MessageSquare className="w-6 h-6 text-primary mb-2" />

@@ -12,6 +12,7 @@ import { ProductDetailSkeleton } from "@/components/Products/ProductsSkeletons";
 import ImageLightbox from "@/components/Products/ImageLightbox";
 import { useCart } from "@/hooks/useCart";
 import { useClientSession } from "@/lib/use-session-client";
+import { useLoading } from "@/contexts/LoadingContext";
 import {
   ShoppingCart,
   ShoppingBag,
@@ -19,6 +20,7 @@ import {
   Plus,
   Check,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface ProductClientProps {
@@ -33,10 +35,12 @@ export default function ProductClient({
   const router = useRouter();
   const { cartItems, addToCart, updateCartQuantity } = useCart();
   const { isLoading: sessionLoading } = useClientSession();
+  const { withLoading } = useLoading();
 
   const [mainImage, setMainImage] = useState<string | null>(
     product?.image ?? null,
   );
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -48,38 +52,54 @@ export default function ProductClient({
   const isOutOfStock = stock <= 0;
   const isLowStock = stock > 0 && stock <= 5;
 
-  // ✅ Calculate average rating (if you have reviews)
-  const averageRating = product.rating || 4.5;
+  const averageRating = product.rating ?? null;
   const reviewCount = 0; // Replace with actual count from reviews
 
   const handleAddToCart = async () => {
     if (!product || isOutOfStock) return;
-    await addToCart(product.id);
+    setActionLoading("add");
+    await withLoading(async () => {
+      await addToCart(product.id);
+    }, false);
+    setActionLoading(null);
   };
 
   const handleDecrease = async () => {
-    if (!product) return;
-    await updateCartQuantity(product.id, quantity - 1);
+    if (!product || quantity <= 0) return;
+    setActionLoading("decrease");
+    await withLoading(async () => {
+      await updateCartQuantity(product.id, quantity - 1);
+    }, false);
+    setActionLoading(null);
   };
 
   const handleIncrease = async () => {
-    if (!product) return;
-    await updateCartQuantity(product.id, quantity + 1);
+    if (!product || quantity >= stock) return;
+    setActionLoading("increase");
+    await withLoading(async () => {
+      await updateCartQuantity(product.id, quantity + 1);
+    }, false);
+    setActionLoading(null);
   };
 
   // ✅ New: Add with specific quantity
   const handleAddWithQuantity = async () => {
-    if (!product || isOutOfStock) return;
-    // Add selected quantity to cart
-    for (let i = 0; i < selectedQuantity; i++) {
-      await addToCart(product.id);
-    }
+    if (!product || isOutOfStock || selectedQuantity <= 0) return;
+    setActionLoading("addWithQuantity");
+    await withLoading(async () => {
+      await updateCartQuantity(product.id, quantity + selectedQuantity);
+    }, false);
     setSelectedQuantity(1);
+    setActionLoading(null);
   };
 
   const handleBuyNow = async () => {
-    if (!product || isOutOfStock) return;
-    await addToCart(product.id);
+    if (!product || isOutOfStock || selectedQuantity <= 0) return;
+    setActionLoading("buyNow");
+    await withLoading(async () => {
+      await updateCartQuantity(product.id, quantity + selectedQuantity);
+    }, false);
+    setActionLoading(null);
     router.push("/cart");
   };
 
@@ -265,11 +285,17 @@ export default function ProductClient({
 
             {/* ✅ Rating - Using actual rating */}
             <div className="flex items-center gap-2">
-              {renderStars(averageRating)}
-              <p className="text-muted-foreground">
-                {averageRating.toFixed(1)}
-                {reviewCount > 0 && ` (${reviewCount} reviews)`}
-              </p>
+              {averageRating !== null ? (
+                <>
+                  {renderStars(averageRating)}
+                  <p className="text-muted-foreground">
+                    {averageRating.toFixed(1)}
+                    {reviewCount > 0 && ` (${reviewCount} reviews)`}
+                  </p>
+                </>
+              ) : (
+                <p className="text-muted-foreground">No ratings yet</p>
+              )}
             </div>
 
             {/* ✅ Stock Status Message */}
@@ -368,17 +394,37 @@ export default function ProductClient({
                 <div className="flex w-full sm:w-auto gap-4">
                   <button
                     onClick={handleAddWithQuantity}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-muted text-foreground hover:bg-accent transition rounded-lg font-medium"
+                    disabled={actionLoading === "addWithQuantity"}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-muted text-foreground hover:bg-accent transition rounded-lg font-medium disabled:opacity-50"
                   >
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to Cart ({selectedQuantity})
+                    {actionLoading === "addWithQuantity" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Adding...
+                      </span>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4" />
+                        Add to Cart ({selectedQuantity})
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={handleBuyNow}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition rounded-lg font-medium"
+                    disabled={actionLoading === "buyNow"}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition rounded-lg font-medium disabled:opacity-50"
                   >
-                    <ShoppingBag className="w-4 h-4" />
-                    Buy Now
+                    {actionLoading === "buyNow" ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4" />
+                        Buy Now
+                      </>
+                    )}
                   </button>
                 </div>
               ) : (
@@ -386,20 +432,30 @@ export default function ProductClient({
                   <div className="flex items-center border border-primary rounded-lg">
                     <button
                       onClick={handleDecrease}
-                      className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 transition rounded-l-lg"
+                      disabled={actionLoading === "decrease"}
+                      className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 transition rounded-l-lg disabled:opacity-50"
                       aria-label="Decrease quantity"
                     >
-                      <Minus className="w-4 h-4" />
+                      {actionLoading === "decrease" ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Minus className="w-4 h-4" />
+                      )}
                     </button>
                     <span className="min-w-[50px] text-center text-foreground font-medium">
                       {quantity}
                     </span>
                     <button
                       onClick={handleIncrease}
-                      className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 transition rounded-r-lg"
+                      disabled={actionLoading === "increase"}
+                      className="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 transition rounded-r-lg disabled:opacity-50"
                       aria-label="Increase quantity"
                     >
-                      <Plus className="w-4 h-4" />
+                      {actionLoading === "increase" ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                   <button

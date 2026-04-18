@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { CartProvider } from "@/contexts/CartContext";
+import { LoadingProvider } from "@/contexts/LoadingContext";
 
 const fontSans = Oxanium({
   subsets: ["latin"],
@@ -35,23 +36,27 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans", fontSans.variable, fontSerif.variable, fontMono.variable)}
+      className={cn(
+        "font-sans",
+        fontSans.variable,
+        fontSerif.variable,
+        fontMono.variable,
+      )}
     >
       <body
         className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Toaster
-          />
-          <CartProvider>
-          {children}
-          </CartProvider> 
-        </ThemeProvider>
+        <LoadingProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Toaster />
+            <CartProvider>{children}</CartProvider>
+          </ThemeProvider>
+        </LoadingProvider>
       </body>
     </html>
   );

@@ -111,11 +111,15 @@ export default function SellerSettings() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Store Name */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor="storeName"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             <Store className="inline w-4 h-4 mr-2" />
             Store Name
           </label>
           <input
+            id="storeName"
             type="text"
             name="storeName"
             value={settings.storeName}
@@ -131,11 +135,15 @@ export default function SellerSettings() {
 
         {/* WhatsApp Number */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor="whatsappNumber"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             <Phone className="inline w-4 h-4 mr-2" />
             WhatsApp Number
           </label>
           <input
+            id="whatsappNumber"
             type="tel"
             name="whatsappNumber"
             value={settings.whatsappNumber}
@@ -151,11 +159,15 @@ export default function SellerSettings() {
 
         {/* Store Description */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             <Info className="inline w-4 h-4 mr-2" />
             Store Description
           </label>
           <textarea
+            id="description"
             name="description"
             value={settings.description}
             onChange={handleChange}

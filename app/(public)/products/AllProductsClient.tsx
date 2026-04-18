@@ -37,47 +37,53 @@ export default function AllProductsClient({
   const [sortBy, setSortBy] = useState(initialSort);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   const updateFilters = (updates: Record<string, string | number>) => {
     const params = new URLSearchParams();
-    
-    const newCategory = updates.category !== undefined ? updates.category as string : categoryFilter;
-    const newSearch = updates.search !== undefined ? updates.search as string : search;
-    const newSort = updates.sort !== undefined ? updates.sort as string : sortBy;
-    const newPage = updates.page !== undefined ? updates.page as number : 1;
-    
-    if (newCategory && newCategory !== "all") params.set("category", newCategory);
+
+    const newCategory =
+      updates.category !== undefined
+        ? (updates.category as string)
+        : categoryFilter;
+    const newSearch =
+      updates.search !== undefined ? (updates.search as string) : search;
+    const newSort =
+      updates.sort !== undefined ? (updates.sort as string) : sortBy;
+    const newPage = updates.page !== undefined ? (updates.page as number) : 1;
+
+    if (newCategory && newCategory !== "all")
+      params.set("category", newCategory);
     if (newSearch) params.set("search", newSearch);
     if (newSort && newSort !== "newest") params.set("sort", newSort);
     if (newPage > 1) params.set("page", newPage.toString());
-    
+
     router.push(`${pathname}?${params.toString()}`);
   };
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
     updateFilters({ search, page: 1 });
   };
-  
+
   const handleCategoryChange = (category: string) => {
     setCategoryFilter(category);
     setCurrentPage(1);
     updateFilters({ category, page: 1 });
   };
-  
+
   const handleSortChange = (sort: string) => {
     setSortBy(sort);
     setCurrentPage(1);
     updateFilters({ sort, page: 1 });
   };
-  
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     updateFilters({ page });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  
+
   const clearFilters = () => {
     setCategoryFilter("all");
     setSearch("");
@@ -85,9 +91,10 @@ export default function AllProductsClient({
     setCurrentPage(1);
     router.push(pathname);
   };
-  
-  const hasActiveFilters = categoryFilter !== "all" || initialSearch || sortBy !== "newest";
-  
+
+  const hasActiveFilters =
+    categoryFilter !== "all" || search.trim().length > 0 || sortBy !== "newest";
+
   // Show error state
   if (error) {
     return (
@@ -104,7 +111,7 @@ export default function AllProductsClient({
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-[calc(100vh-200px)] bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -115,7 +122,7 @@ export default function AllProductsClient({
             Browse our collection of products from trusted sellers
           </p>
         </div>
-        
+
         {/* Search and Filters Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           {/* Search */}
@@ -133,7 +140,7 @@ export default function AllProductsClient({
               </div>
             </form>
           </div>
-          
+
           {/* Category Filter - Desktop */}
           <div className="hidden md:block">
             <select
@@ -143,11 +150,13 @@ export default function AllProductsClient({
             >
               <option value="all">All Categories</option>
               {PRODUCT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
-          
+
           {/* Sort */}
           <div className="hidden md:block">
             <select
@@ -160,7 +169,7 @@ export default function AllProductsClient({
               <option value="price_desc">Price: High to Low</option>
             </select>
           </div>
-          
+
           {/* Mobile Filter Button */}
           <button
             onClick={() => setIsFilterOpen(true)}
@@ -169,7 +178,7 @@ export default function AllProductsClient({
             <Filter className="w-4 h-4" />
             Filters
           </button>
-          
+
           {/* Clear Filters Button */}
           {hasActiveFilters && (
             <button
@@ -181,12 +190,12 @@ export default function AllProductsClient({
             </button>
           )}
         </div>
-        
+
         {/* Results Count */}
         <div className="text-sm text-muted-foreground mb-4">
           Showing {initialProducts.length} of {total} products
         </div>
-        
+
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
           {initialProducts.length === 0 ? (
@@ -207,7 +216,7 @@ export default function AllProductsClient({
             ))
           )}
         </div>
-        
+
         {/* Pagination */}
         {initialTotalPages > 1 && (
           <div className="flex justify-center gap-2 mt-8">
@@ -231,11 +240,14 @@ export default function AllProductsClient({
           </div>
         )}
       </div>
-      
+
       {/* Mobile Filter Modal */}
       {isFilterOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsFilterOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsFilterOpen(false)}
+          />
           <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-xl p-6 animate-slide-up">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-foreground">Filters</h3>
@@ -243,9 +255,11 @@ export default function AllProductsClient({
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
-            
+
             <div className="mb-4">
-              <label className="block text-sm font-medium text-foreground mb-2">Category</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Category
+              </label>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
@@ -253,13 +267,17 @@ export default function AllProductsClient({
               >
                 <option value="all">All Categories</option>
                 {PRODUCT_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div className="mb-6">
-              <label className="block text-sm font-medium text-foreground mb-2">Sort By</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Sort By
+              </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -270,11 +288,15 @@ export default function AllProductsClient({
                 <option value="price_desc">Price: High to Low</option>
               </select>
             </div>
-            
+
             <button
               onClick={() => {
-                handleCategoryChange(categoryFilter);
-                handleSortChange(sortBy);
+                setCurrentPage(1);
+                updateFilters({
+                  category: categoryFilter,
+                  sort: sortBy,
+                  page: 1,
+                });
                 setIsFilterOpen(false);
               }}
               className="w-full py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"

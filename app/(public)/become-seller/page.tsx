@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useRole } from "@/lib/auth/helpers";
 import toast from "react-hot-toast";
-import { Store, Phone, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import {
+  Store,
+  Phone,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import GlobalLoader from "@/components/ui/global-loader";
 
 type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | null;
@@ -13,7 +20,7 @@ type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | null;
 const BecomeSeller = () => {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const { isSeller } = useRole();
+  const { isSeller, isLoading: roleLoading } = useRole();
 
   const [storeName, setStoreName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -25,11 +32,10 @@ const BecomeSeller = () => {
 
   // Redirect if already a seller
   useEffect(() => {
-    if (isSeller) {
+    if (!roleLoading && isSeller) {
       router.push("/seller");
-      return;
     }
-  }, [isSeller, router]);
+  }, [isSeller, roleLoading, router]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -49,9 +55,13 @@ const BecomeSeller = () => {
       }
     };
 
-    if (session?.user) checkStatus();
-    else setCheckingStatus(false);
-  }, [session]);
+    if (roleLoading) return;
+    if (session?.user) {
+      checkStatus();
+    } else {
+      setCheckingStatus(false);
+    }
+  }, [session, roleLoading]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -70,7 +80,7 @@ const BecomeSeller = () => {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.message || "Failed to submit application")
+        toast.error(data.message || "Failed to submit application");
         return;
       }
 
@@ -83,7 +93,7 @@ const BecomeSeller = () => {
 
       toast.success("Application submitted successfully!");
       setApplicationStatus("PENDING");
-      
+
       // Reset form
       setStoreName("");
       setDescription("");
@@ -96,9 +106,7 @@ const BecomeSeller = () => {
   };
 
   if (checkingStatus) {
-    return (
-     <GlobalLoader />
-    );
+    return <GlobalLoader />;
   }
 
   const getStatusIcon = () => {
@@ -158,23 +166,30 @@ const BecomeSeller = () => {
 
           {/* Status Display */}
           {applicationStatus && (
-            <div className={`${getStatusStyles()} border rounded-lg p-6 mb-8 space-y-3`}>
+            <div
+              className={`${getStatusStyles()} border rounded-lg p-6 mb-8 space-y-3`}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/50 dark:bg-black/20 flex items-center justify-center">
                   {getStatusIcon()}
                 </div>
                 <div>
-                  <h2 className={`text-lg font-semibold ${getStatusTextStyles()}`}>
-                    {applicationStatus === "PENDING" && "Application Under Review"}
-                    {applicationStatus === "APPROVED" && "Application Approved!"}
-                    {applicationStatus === "REJECTED" && "Application Not Approved"}
+                  <h2
+                    className={`text-lg font-semibold ${getStatusTextStyles()}`}
+                  >
+                    {applicationStatus === "PENDING" &&
+                      "Application Under Review"}
+                    {applicationStatus === "APPROVED" &&
+                      "Application Approved!"}
+                    {applicationStatus === "REJECTED" &&
+                      "Application Not Approved"}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {applicationStatus === "PENDING" && 
+                    {applicationStatus === "PENDING" &&
                       "Your seller application has been submitted and is currently being reviewed. We'll notify you once a decision has been made."}
-                    {applicationStatus === "APPROVED" && 
+                    {applicationStatus === "APPROVED" &&
                       "Congratulations! Your seller application has been approved. You can now start selling on VoraCart."}
-                    {applicationStatus === "REJECTED" && 
+                    {applicationStatus === "REJECTED" &&
                       "Unfortunately your application was not approved at this time. You may reapply with updated information below."}
                   </p>
                 </div>
@@ -194,11 +209,15 @@ const BecomeSeller = () => {
           {(applicationStatus === null || applicationStatus === "REJECTED") && (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <label
+                  htmlFor="storeName"
+                  className="text-sm font-medium text-foreground flex items-center gap-2"
+                >
                   <Store className="w-4 h-4 text-muted-foreground" />
                   Store Name
                 </label>
                 <input
+                  id="storeName"
                   type="text"
                   placeholder="e.g., Michael's Tech Store"
                   value={storeName}
@@ -209,11 +228,15 @@ const BecomeSeller = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <label
+                  htmlFor="description"
+                  className="text-sm font-medium text-foreground flex items-center gap-2"
+                >
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   Store Description
                 </label>
                 <textarea
+                  id="description"
                   rows={4}
                   placeholder="Tell us about your store, what you sell, and why you want to become a seller..."
                   value={description}
@@ -224,11 +247,15 @@ const BecomeSeller = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <label
+                  htmlFor="phone"
+                  className="text-sm font-medium text-foreground flex items-center gap-2"
+                >
                   <Phone className="w-4 h-4 text-muted-foreground" />
                   WhatsApp Number
                 </label>
                 <input
+                  id="phone"
                   type="tel"
                   placeholder="e.g., +1 234 567 8900"
                   value={phone}

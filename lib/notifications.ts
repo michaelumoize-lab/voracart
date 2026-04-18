@@ -206,7 +206,7 @@ export async function notifyApplicantOfDecision(
     userId: applicantUserId,
     type: approved ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED",
     message,
-    link: approved ? "/seller" : "/seller/apply",
+    link: approved ? "/seller" : "/become-seller",
   });
 }
 

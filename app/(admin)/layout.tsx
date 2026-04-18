@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth/helpers";
 import { Loader2 } from "lucide-react";
-import AdminSidebar from "@/components/Admin/AdminSid44ebar";
+import AdminSidebar from "@/components/Admin/AdminSidebar";
 
 export default function AdminLayout({
   children,
@@ -37,9 +37,7 @@ export default function AdminLayout({
     <div className="flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6">
-          {children}
-        </div>
+        <div className="container mx-auto p-6">{children}</div>
       </main>
     </div>
   );

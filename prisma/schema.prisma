@@ -170,6 +170,15 @@ model Order {
   updatedAt DateTime    @updatedAt
   items     OrderItem[]
 
+  shippingName     String?
+  shippingPhone    String?
+  shippingAddress  String?
+  shippingCity     String?
+  shippingState    String?
+  shippingPincode  String?
+  
+  totalAmount      Float?
+
   @@index([userId])
   @@index([status])
   @@map("orders")

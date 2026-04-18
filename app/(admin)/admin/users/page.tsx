@@ -83,23 +83,45 @@ export default function AdminUsersPage() {
       });
 
       const res = await fetch(`/api/admin/users?${params}`);
-      const data = await res.json();
+      if (!res.ok) {
+        const body = await res.text();
+        const message = body || `HTTP ${res.status}`;
+        throw new Error(message);
+      }
 
+      const data = await res.json();
       if (data.success) {
         setUsers(data.users);
         setTotalPages(data.pagination.pages);
       } else {
-        toast.error(data.message || "Failed to load users");
+        throw new Error(data.message || "Failed to load users");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load users",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    const user = users.find((item) => item.id === userId);
+    if (!user) {
+      toast.error("User not found");
+      return;
+    }
+
+    if (user.role === "admin" && newRole !== "admin") {
+      const confirmed = confirm(
+        `Are you sure you want to demote ${user.name || user.email} from admin to ${newRole}?`,
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setActionLoading(true);
     try {
       const res = await fetch("/api/admin/users", {
@@ -108,15 +130,22 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ userId, role: newRole }),
       });
 
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success) {
         toast.success(`User role updated to ${newRole}`);
         fetchUsers();
       } else {
-        toast.error(data.message || "Failed to update role");
+        throw new Error(data.message || "Failed to update role");
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
     } finally {
       setActionLoading(false);
       setMenuOpen(null);
@@ -128,9 +157,10 @@ export default function AdminUsersPage() {
 
     setActionLoading(true);
     try {
-      const banExpires = banDays > 0 
-        ? new Date(Date.now() + banDays * 24 * 60 * 60 * 1000).toISOString()
-        : null;
+      const banExpires =
+        banDays > 0
+          ? new Date(Date.now() + banDays * 24 * 60 * 60 * 1000).toISOString()
+          : null;
 
       const res = await fetch("/api/admin/users", {
         method: "PUT",
@@ -167,7 +197,12 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, banned: false, banReason: null, banExpires: null }),
+        body: JSON.stringify({
+          userId,
+          banned: false,
+          banReason: null,
+          banExpires: null,
+        }),
       });
 
       const data = await res.json();
@@ -186,7 +221,11 @@ export default function AdminUsersPage() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete ${userName}? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
 
@@ -248,7 +287,10 @@ export default function AdminUsersPage() {
             type="text"
             placeholder="Search by name or email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -256,7 +298,10 @@ export default function AdminUsersPage() {
           <Filter className="w-4 h-4 text-muted-foreground self-center" />
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Roles</option>
@@ -273,19 +318,36 @@ export default function AdminUsersPage() {
           <table className="w-full">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">User</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Role</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">WhatsApp</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Stats</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Joined</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  User
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Role
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  WhatsApp
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Stats
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Joined
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Status
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                  <td
+                    colSpan={7}
+                    className="text-center py-12 text-muted-foreground"
+                  >
                     No users found
                   </td>
                 </tr>
@@ -294,14 +356,20 @@ export default function AdminUsersPage() {
                   <tr key={user.id} className="hover:bg-muted/30 transition">
                     <td className="p-4">
                       <div>
-                        <p className="font-medium text-foreground">{user.name || "Unnamed"}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <p className="font-medium text-foreground">
+                          {user.name || "Unnamed"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.email}
+                        </p>
                       </div>
                     </td>
                     <td className="p-4">
                       <select
                         value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        onChange={(e) =>
+                          handleRoleChange(user.id, e.target.value)
+                        }
                         disabled={actionLoading}
                         className={`px-2 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-primary ${getRoleBadgeColor(user.role)}`}
                       >
@@ -344,7 +412,9 @@ export default function AdminUsersPage() {
                     <td className="p-4">
                       <div className="relative">
                         <button
-                          onClick={() => setMenuOpen(menuOpen === user.id ? null : user.id)}
+                          onClick={() =>
+                            setMenuOpen(menuOpen === user.id ? null : user.id)
+                          }
                           className="p-1 rounded-lg hover:bg-muted transition"
                         >
                           <MoreVertical className="w-4 h-4 text-muted-foreground" />
@@ -353,7 +423,9 @@ export default function AdminUsersPage() {
                           <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
                             {user.banned ? (
                               <button
-                                onClick={() => handleUnban(user.id, user.name || user.email)}
+                                onClick={() =>
+                                  handleUnban(user.id, user.name || user.email)
+                                }
                                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-600 hover:bg-muted transition text-left"
                               >
                                 <UserCheck className="w-4 h-4" />
@@ -362,7 +434,10 @@ export default function AdminUsersPage() {
                             ) : (
                               <button
                                 onClick={() => {
-                                  setBanUser({ userId: user.id, userName: user.name || user.email });
+                                  setBanUser({
+                                    userId: user.id,
+                                    userName: user.name || user.email,
+                                  });
                                   setShowBanModal(true);
                                   setMenuOpen(null);
                                 }}
@@ -374,7 +449,9 @@ export default function AdminUsersPage() {
                             )}
                             {user.role !== "admin" && (
                               <button
-                                onClick={() => handleDelete(user.id, user.name || user.email)}
+                                onClick={() =>
+                                  handleDelete(user.id, user.name || user.email)
+                                }
                                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-muted transition text-left border-t border-border"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -420,13 +497,21 @@ export default function AdminUsersPage() {
       {showBanModal && banUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Ban User</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              Ban User
+            </h2>
             <p className="text-muted-foreground mb-4">
-              Are you sure you want to ban <span className="font-medium text-foreground">{banUser.userName}</span>?
+              Are you sure you want to ban{" "}
+              <span className="font-medium text-foreground">
+                {banUser.userName}
+              </span>
+              ?
             </p>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-foreground mb-2">Reason for ban</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Reason for ban
+              </label>
               <textarea
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
@@ -437,7 +522,9 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-foreground mb-2">Ban duration</label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Ban duration
+              </label>
               <select
                 value={banDays}
                 onChange={(e) => setBanDays(parseInt(e.target.value))}
@@ -466,7 +553,11 @@ export default function AdminUsersPage() {
                 disabled={actionLoading}
                 className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
+                {actionLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Ban className="w-4 h-4" />
+                )}
                 Ban User
               </button>
             </div>

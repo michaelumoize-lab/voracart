@@ -74,14 +74,21 @@ export default function OrderDetailPage() {
     
     try {
       const res = await fetch(`/api/seller/orders/${orderId}`);
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       if (data.success) {
         setOrder(data.order);
       } else {
-        toast.error("Order not found");
-        setFetchError(true);
+        throw new Error(data.message || "Order not found");
       }
     } catch (error) {
+      console.error("Failed to fetch order:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load order");
+      setFetchError(true);
+    }
       console.error("Failed to fetch order:", error);
       toast.error("Failed to load order");
       setFetchError(true);
@@ -237,6 +244,7 @@ export default function OrderDetailPage() {
             {isAdmin && (
               <div className="flex items-center gap-3">
                 <select
+                  aria-label="Overall order status"
                   value={order.status}
                   onChange={(e) => updateOrderStatus(e.target.value)}
                   className={`px-3 py-1 rounded-full text-sm font-medium border-0 focus:ring-2 focus:ring-primary ${statusColors[order.status]}`}
@@ -305,6 +313,7 @@ export default function OrderDetailPage() {
                 {/* ✅ Sellers can update individual item status */}
                 <div>
                   <select
+                    aria-label={`Item status for ${item.productName}`}
                     value={item.itemStatus || "PENDING"}
                     onChange={(e) => updateItemStatus(item.id, e.target.value)}
                     disabled={updatingItem === item.id}

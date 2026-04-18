@@ -1,11 +1,18 @@
-//app/(seller)/seller/products/page.tsx
-// app/(seller)/seller/orders/page.tsx
+// app/(seller)/orders/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth/helpers";
-import { Loader2, Eye, Package, Calendar, DollarSign, Search, Filter } from "lucide-react";
+import {
+  Loader2,
+  Eye,
+  Package,
+  Calendar,
+  DollarSign,
+  Search,
+  Filter,
+} from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -26,7 +33,14 @@ const statusColors: Record<string, string> = {
   CANCELLED: "bg-red-500/10 text-red-600",
 };
 
-const statusOptions = ["ALL", "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
+const statusOptions = [
+  "ALL",
+  "PENDING",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+];
 
 export default function SellerOrdersPage() {
   const router = useRouter();
@@ -58,13 +72,17 @@ export default function SellerOrdersPage() {
       });
 
       const res = await fetch(`/api/seller/orders?${params}`);
-      const data = await res.json();
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `HTTP ${res.status}`);
+      }
 
+      const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
         setTotalPages(data.pagination.pages);
       } else {
-        toast.error(data.message || "Failed to load orders");
+        throw new Error(data.message || "Failed to load orders");
       }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
@@ -124,13 +142,27 @@ export default function SellerOrdersPage() {
             <table className="w-full">
               <thead className="bg-muted/50 border-b border-border">
                 <tr className="text-left">
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Order ID</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Customer</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Items</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Total</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Order ID
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Customer
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Date
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Items
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Total
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -139,7 +171,9 @@ export default function SellerOrdersPage() {
                     <td className="p-4 font-mono text-sm text-foreground">
                       #{order.id.slice(-8)}
                     </td>
-                    <td className="p-4 text-foreground">{order.customerName}</td>
+                    <td className="p-4 text-foreground">
+                      {order.customerName}
+                    </td>
                     <td className="p-4 text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
@@ -148,7 +182,9 @@ export default function SellerOrdersPage() {
                       ₦{order.total.toLocaleString()}
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}
+                      >
                         {order.status}
                       </span>
                     </td>

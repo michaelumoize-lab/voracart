@@ -16,6 +16,8 @@ export default function ImageLightbox({
   onClose,
   onNavigate,
 }: ImageLightboxProps) {
+  if (images.length === 0) return null;
+
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
 
@@ -44,7 +46,10 @@ export default function ImageLightbox({
     >
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition"
         aria-label="Close"
       >

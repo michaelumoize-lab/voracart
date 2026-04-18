@@ -72,10 +72,23 @@ export function SignUpForm() {
       });
 
       if (data?.user?.id) {
-        await fetch("/api/auth/set-role", {
+        const response = await fetch("/api/auth/set-role", {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: data.user.id }),
         });
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(
+            body || `Failed to set user role (HTTP ${response.status})`,
+          );
+        }
+
+        const roleData = await response.json();
+        if (!roleData?.success) {
+          throw new Error(roleData?.message || "Failed to assign user role");
+        }
       }
 
       if (signUpError) {

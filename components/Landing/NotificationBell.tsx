@@ -138,6 +138,12 @@ export default function NotificationBell() {
     }
   };
 
+  const normalizeNotificationLink = (link: string | null) => {
+    if (!link) return null;
+    if (link === "/seller/apply") return "/become-seller";
+    return link;
+  };
+
   const handleNotificationClick = async (notification: AppNotification) => {
     // Mark as read when clicking
     if (!notification.read) {
@@ -156,8 +162,9 @@ export default function NotificationBell() {
     }
 
     setOpen(false);
-    if (notification.link) {
-      router.push(notification.link);
+    const destination = normalizeNotificationLink(notification.link);
+    if (destination) {
+      router.push(destination);
     }
   };
 
@@ -222,9 +229,17 @@ export default function NotificationBell() {
                     !n.read ? "bg-primary/5" : "bg-card hover:bg-muted/50"
                   }`}
                 >
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleNotificationClick(n)}
-                    className="w-full text-left px-4 py-3 flex items-start gap-3 transition"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleNotificationClick(n);
+                      }
+                    }}
+                    className="w-full text-left px-4 py-3 flex items-start gap-3 transition cursor-pointer"
                   >
                     <span className="text-primary mt-0.5 shrink-0">
                       {typeIcon[n.type] ?? <Bell className="w-4 h-4" />}
@@ -265,7 +280,7 @@ export default function NotificationBell() {
                         </button>
                       </div>
                     )}
-                  </button>
+                  </div>
                 </div>
               ))
             )}

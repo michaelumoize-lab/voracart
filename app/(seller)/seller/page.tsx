@@ -69,11 +69,32 @@ export default function SellerDashboard() {
         fetch("/api/seller/orders?limit=5"),
       ]);
 
+      if (!statsRes.ok) {
+        const body = await statsRes.text();
+        throw new Error(
+          body || `Failed to load stats (HTTP ${statsRes.status})`,
+        );
+      }
+      if (!ordersRes.ok) {
+        const body = await ordersRes.text();
+        throw new Error(
+          body || `Failed to load orders (HTTP ${ordersRes.status})`,
+        );
+      }
+
       const statsData = await statsRes.json();
       const ordersData = await ordersRes.json();
 
-      if (statsData.success) setStats(statsData.data);
-      if (ordersData.success) setRecentOrders(ordersData.orders);
+      if (statsData.success) {
+        setStats(statsData.data);
+      } else {
+        throw new Error(statsData.message || "Failed to load dashboard stats");
+      }
+      if (ordersData.success) {
+        setRecentOrders(ordersData.orders);
+      } else {
+        throw new Error(ordersData.message || "Failed to load recent orders");
+      }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
@@ -125,8 +146,12 @@ export default function SellerDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Seller Dashboard</h1>
-          <p className="text-muted-foreground">Manage your products and orders</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            Seller Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your products and orders
+          </p>
         </div>
         <Link
           href="/seller/add-product"
@@ -168,7 +193,9 @@ export default function SellerDashboard() {
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Low Stock Products</p>
+              <p className="text-sm text-muted-foreground">
+                Low Stock Products
+              </p>
               <p className="text-2xl font-bold text-foreground mt-1">
                 {stats?.lowStockProducts || 0}
               </p>
@@ -205,7 +232,9 @@ export default function SellerDashboard() {
             <p className="text-muted-foreground">Chart will appear here</p>
           </div>
           <div className="mt-4 flex justify-between text-sm text-muted-foreground">
-            <span>This Month: ₦{(stats?.monthlyRevenue || 0).toLocaleString()}</span>
+            <span>
+              This Month: ₦{(stats?.monthlyRevenue || 0).toLocaleString()}
+            </span>
             <span>Total: ₦{(stats?.totalRevenue || 0).toLocaleString()}</span>
           </div>
         </div>
@@ -246,7 +275,10 @@ export default function SellerDashboard() {
             </div>
           ) : (
             recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-4">
+              <div
+                key={order.id}
+                className="flex items-center justify-between p-4"
+              >
                 <div>
                   <p className="font-medium text-foreground">
                     {order.customerName || "Guest"}
@@ -259,7 +291,9 @@ export default function SellerDashboard() {
                   <p className="font-medium text-foreground">
                     ₦{(order.total ?? 0).toLocaleString()}
                   </p>
-                  <p className="text-sm text-muted-foreground">{order.status}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.status}
+                  </p>
                 </div>
                 <Link
                   href={`/seller/orders/${order.id}`}
@@ -306,7 +340,12 @@ export default function SellerDashboard() {
 }
 
 // Quick Action Card Component
-function QuickActionCard({ title, description, icon: Icon, href }: QuickActionCardProps) {
+function QuickActionCard({
+  title,
+  description,
+  icon: Icon,
+  href,
+}: QuickActionCardProps) {
   return (
     <Link
       href={href}

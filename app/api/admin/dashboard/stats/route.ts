@@ -10,6 +10,9 @@ export async function GET(request: NextRequest) {
   if (session.user.role !== "admin") return apiError("Admin access required", 403);
 
   try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const [
       totalUsers,
       totalSellers,
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest) {
         where: {
           order: {
             status: "DELIVERED",
-            createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+            createdAt: { gte: monthStart },
           },
         },
         _sum: { price: true },
