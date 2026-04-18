@@ -27,7 +27,7 @@ interface CartProduct {
 export default function CheckoutPage() {
   const router = useRouter();
   const { session } = useClientSession();
-  const { cartItems, loading: cartLoading } = useCart();
+  const { cartItems, loading: cartLoading, clearCart } = useCart();
   const { withLoading } = useLoading();
   const [products, setProducts] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,12 +57,22 @@ export default function CheckoutPage() {
     try {
       const productsData = await Promise.all(
         productIds.map(async (id) => {
-          const res = await fetch(`/api/products/${id}`);
-          const data = await res.json();
-          return data.product;
+          try {
+            const res = await fetch(`/api/products/${id}`);
+            if (!res.ok) {
+              console.error(`Failed to fetch product ${id}: ${res.status}`);
+              return null;
+            }
+            const data = await res.json();
+            return data.product;
+          } catch (error) {
+            console.error(`Error fetching product ${id}:`, error);
+            return null;
+          }
         }),
       );
-      setProducts(productsData);
+      const validProducts = productsData.filter((product) => product !== null);
+      setProducts(validProducts);
     } catch (error) {
       console.error("Failed to load cart items", error);
       toast.error("Failed to load cart items");
@@ -100,82 +110,86 @@ export default function CheckoutPage() {
       await withLoading(async () => {
         // Create order via API
         const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: products.map((p) => ({
-            productId: p.id,
-            quantity: cartItems[p.id],
-            price: Number(getItemPrice(p)),
-          })),
-          totalAmount: Number(total),
-          shippingDetails: {
-            name: formData.fullName,
-            phone: formData.phone,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            pincode: formData.pincode,
-          },
-        }),
-      });
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: products.map((p) => ({
+              productId: p.id,
+              quantity: cartItems[p.id],
+              price: Number(getItemPrice(p)),
+            })),
+            totalAmount: Number(total),
+            shippingDetails: {
+              name: formData.fullName,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+            },
+          }),
+        });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Order failed");
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Order failed");
 
-      // ✅ Get unique seller WhatsApp numbers from all products
-      const sellerNumbers = Array.from(
-        new Set(
-          products
-            .map((p) => p.seller?.whatsappNumber?.trim())
-            .filter((value): value is string => Boolean(value)),
-        ),
-      );
-
-      // ✅ Format WhatsApp number (remove non-digit characters and add +)
-      const formatWhatsAppNumber = (num: string) => {
-        const cleaned = num.replace(/\D/g, "");
-        return cleaned ? `+${cleaned}` : "";
-      };
-
-      // Prepare order details message
-      const orderItems = products
-        .map((p) => {
-          const qty = cartItems[p.id];
-          const price = getItemPrice(p);
-          return `${p.name} x${qty} = $${(price * qty).toFixed(2)}`;
-        })
-        .join("%0A");
-
-      const baseMessage = `🛒 *New Order from VoraCart*%0A%0A*Customer:* ${formData.fullName}%0A*Phone:* ${formData.phone}%0A*Address:* ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}%0A%0A*Items:*%0A${orderItems}%0A%0A*Total:* $${total.toFixed(2)}%0A%0A*Order ID:* ${data.order.id.slice(-8)}%0A%0AThank you for shopping with us!`;
-
-      // ✅ Handle seller contact cases
-      if (sellerNumbers.length === 0) {
-        toast.success(
-          "Order placed! Seller contact is not configured. Please check My Orders or contact support.",
+        // ✅ Get unique seller WhatsApp numbers from all products
+        const sellerNumbers = Array.from(
+          new Set(
+            products
+              .map((p) => p.seller?.whatsappNumber?.trim())
+              .filter((value): value is string => Boolean(value)),
+          ),
         );
-        router.push("/my-orders");
-      } else if (sellerNumbers.length === 1) {
-        const whatsappNumber = formatWhatsAppNumber(sellerNumbers[0]);
 
-        if (!whatsappNumber) {
+        // ✅ Format WhatsApp number (remove non-digit characters and add +)
+        const formatWhatsAppNumber = (num: string) => {
+          const cleaned = num.replace(/\D/g, "");
+          return cleaned ? `+${cleaned}` : "";
+        };
+
+        // Prepare order details message
+        const orderItems = products
+          .map((p) => {
+            const qty = cartItems[p.id];
+            const price = getItemPrice(p);
+            return `${encodeURIComponent(p.name)} x${qty} = $${(price * qty).toFixed(2)}`;
+          })
+          .join("%0A");
+
+        const baseMessage = `🛒 *New Order from VoraCart*%0A%0A*Customer:* ${encodeURIComponent(formData.fullName)}%0A*Phone:* ${encodeURIComponent(formData.phone)}%0A*Address:* ${encodeURIComponent(formData.address)}, ${encodeURIComponent(formData.city)}, ${encodeURIComponent(formData.state)} - ${encodeURIComponent(formData.pincode)}%0A%0A*Items:*%0A${orderItems}%0A%0A*Total:* $${total.toFixed(2)}%0A%0A*Order ID:* ${data.order.id.slice(-8)}%0A%0AThank you for shopping with us!`;
+
+        // ✅ Handle seller contact cases
+        if (sellerNumbers.length === 0) {
           toast.success(
             "Order placed! Seller contact is not configured. Please check My Orders or contact support.",
           );
+          clearCart();
           router.push("/my-orders");
+        } else if (sellerNumbers.length === 1) {
+          const whatsappNumber = formatWhatsAppNumber(sellerNumbers[0]);
+
+          if (!whatsappNumber) {
+            toast.success(
+              "Order placed! Seller contact is not configured. Please check My Orders or contact support.",
+            );
+            clearCart();
+            router.push("/my-orders");
+          } else {
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${baseMessage}`;
+            window.open(whatsappUrl, "_blank");
+            toast.success("Order placed! Redirecting to WhatsApp...");
+            clearCart();
+            router.push("/my-orders");
+          }
         } else {
-          const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${baseMessage}`;
-          window.open(whatsappUrl, "_blank");
-          toast.success("Order placed! Redirecting to WhatsApp...");
+          toast.success(
+            "Order placed! This order contains multiple sellers. Please check My Orders for details.",
+          );
+          clearCart();
           router.push("/my-orders");
         }
-      } else {
-        toast.success(
-          "Order placed! This order contains multiple sellers. Please check My Orders for details.",
-        );
-        router.push("/my-orders");
-      }
-    });
+      });
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error(

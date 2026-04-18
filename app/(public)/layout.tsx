@@ -1,4 +1,4 @@
-// app/(landing)/layout.tsx
+// app/(public)/layout.tsx
 import Navbar from "@/components/Landing/Navbar";
 import Footer from "@/components/Landing/Footer";
 

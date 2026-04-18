@@ -28,24 +28,41 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchOrders();
-    }
-  }, [session]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch("/api/orders/my-orders");
+      if (!res.ok) {
+        let errorMessage = "Failed to load orders";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
       const data = await res.json();
-      if (data.success) setOrders(data.orders);
-      else toast.error(data.message || "Failed to load orders");
-    } catch {
-      toast.error("Something went wrong");
+      if (data.success) {
+        setOrders(data.orders);
+      } else {
+        toast.error(data.message || "Failed to load orders");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchOrders();
+    } else {
+      setLoading(false);
+    }
+  }, [session, fetchOrders]);
 
   if (loading) {
     return (

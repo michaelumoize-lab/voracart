@@ -22,6 +22,9 @@ const SellerApplications = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [processingId, setProcessingId] = useState<string | null>(null); // ✅ Added processing state
+  const [processingAction, setProcessingAction] = useState<
+    "APPROVED" | "REJECTED" | null
+  >(null);
   const [filter, setFilter] = useState<
     "ALL" | "PENDING" | "APPROVED" | "REJECTED"
   >("PENDING");
@@ -54,6 +57,7 @@ const SellerApplications = () => {
     if (processingId === applicationId) return;
 
     setProcessingId(applicationId);
+    setProcessingAction(status);
 
     try {
       const res = await fetch("/api/seller-application/admin/review", {
@@ -97,6 +101,7 @@ const SellerApplications = () => {
       );
     } finally {
       setProcessingId(null);
+      setProcessingAction(null);
     }
   };
 
@@ -207,10 +212,14 @@ const SellerApplications = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleReview(application.id, "APPROVED")}
-                      disabled={processingId === application.id}
+                      disabled={
+                        processingId === application.id &&
+                        processingAction === "APPROVED"
+                      }
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {processingId === application.id ? (
+                      {processingId === application.id &&
+                      processingAction === "APPROVED" ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <CheckCircle className="w-3.5 h-3.5" />
@@ -219,10 +228,14 @@ const SellerApplications = () => {
                     </button>
                     <button
                       onClick={() => handleReview(application.id, "REJECTED")}
-                      disabled={processingId === application.id}
+                      disabled={
+                        processingId === application.id &&
+                        processingAction === "REJECTED"
+                      }
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {processingId === application.id ? (
+                      {processingId === application.id &&
+                      processingAction === "REJECTED" ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <XCircle className="w-3.5 h-3.5" />

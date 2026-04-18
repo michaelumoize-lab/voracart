@@ -50,6 +50,14 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300); // 300ms debounce
+    return () => clearTimeout(timer);
+  }, [search]);
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -69,8 +77,10 @@ export default function AdminUsersPage() {
   }, [isAdmin, roleLoading, router]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [page, roleFilter, search]);
+    if (!roleLoading && isAdmin) {
+      fetchUsers();
+    }
+  }, [page, roleFilter, debouncedSearch, roleLoading, isAdmin]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -79,7 +89,7 @@ export default function AdminUsersPage() {
         page: page.toString(),
         limit: limit.toString(),
         ...(roleFilter !== "all" && { role: roleFilter }),
-        ...(search && { search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
       });
 
       const res = await fetch(`/api/admin/users?${params}`);
@@ -173,6 +183,17 @@ export default function AdminUsersPage() {
         }),
       });
 
+      if (!res.ok) {
+        let errorMessage = "Failed to ban user";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await res.json();
       if (data.success) {
         toast.success(`User ${banUser.userName} has been banned`);
@@ -205,9 +226,24 @@ export default function AdminUsersPage() {
         }),
       });
 
+      if (!res.ok) {
+        let errorMessage = "Failed to unban user";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await res.json();
       if (data.success) {
         toast.success(`${userName} has been unbanned`);
+        fetchUsers();
+      } else {
+        toast.error(data.message || "Failed to unban user");
+      }
         fetchUsers();
       } else {
         toast.error(data.message || "Failed to unban user");
@@ -235,9 +271,24 @@ export default function AdminUsersPage() {
         method: "DELETE",
       });
 
+      if (!res.ok) {
+        let errorMessage = "Failed to delete user";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const data = await res.json();
       if (data.success) {
         toast.success(`${userName} has been deleted`);
+        fetchUsers();
+      } else {
+        toast.error(data.message || "Failed to delete user");
+      }
         fetchUsers();
       } else {
         toast.error(data.message || "Failed to delete user");

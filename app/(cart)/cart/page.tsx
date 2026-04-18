@@ -40,16 +40,20 @@ export default function CartPage() {
   const [products, setProducts] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (!session?.user && !cartLoading) {
+      setIsRedirecting(true);
       router.push("/auth/sign-in?redirect=/cart");
     }
   }, [session, cartLoading, router]);
 
   useEffect(() => {
-    fetchCartProducts();
-  }, [cartItems]);
+    if (!isRedirecting) {
+      fetchCartProducts();
+    }
+  }, [cartItems, isRedirecting]);
 
   const fetchCartProducts = async () => {
     const productIds = Object.keys(cartItems);
@@ -62,12 +66,22 @@ export default function CartPage() {
     try {
       const productsData = await Promise.all(
         productIds.map(async (id) => {
-          const res = await fetch(`/api/products/${id}`);
-          const data = await res.json();
-          return data.product;
+          try {
+            const res = await fetch(`/api/products/${id}`);
+            if (!res.ok) {
+              console.error(`Failed to fetch product ${id}: ${res.status}`);
+              return null;
+            }
+            const data = await res.json();
+            return data.product;
+          } catch (error) {
+            console.error(`Error fetching product ${id}:`, error);
+            return null;
+          }
         }),
       );
-      setProducts(productsData);
+      const validProducts = productsData.filter((product) => product !== null);
+      setProducts(validProducts);
     } catch (error) {
       toast.error("Failed to load cart items");
     } finally {
@@ -196,10 +210,14 @@ export default function CartPage() {
                     </button>
                     <span className="w-8 text-center">{quantity}</span>
                     <button
-                      onClick={() =>
-                        handleUpdateQuantity(product.id, quantity + 1)
+                      onClick={() => {
+                        if (quantity >= product.stock) return;
+                        handleUpdateQuantity(product.id, quantity + 1);
+                      }}
+                      disabled={
+                        actionLoading === product.id ||
+                        quantity >= product.stock
                       }
-                      disabled={actionLoading === product.id}
                       className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-accent disabled:opacity-50"
                     >
                       {actionLoading === product.id ? (

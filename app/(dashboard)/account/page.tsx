@@ -17,25 +17,41 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchUserData();
-    }
-  }, [session]);
-
   const fetchUserData = async () => {
     try {
       const res = await fetch("/api/user/profile");
+      if (!res.ok) {
+        let errorMessage = "Failed to load profile";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = res.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
       const data = await res.json();
       if (data.success) {
         setUserData(data.user);
+      } else {
+        toast.error(data.message || "Failed to load profile");
       }
     } catch (error) {
-      toast.error("Failed to load profile");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load profile",
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUserData();
+    } else {
+      setLoading(false);
+    }
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

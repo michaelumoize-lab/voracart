@@ -29,19 +29,25 @@ interface Order {
 }
 
 export default function OrderDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id;
+  const orderId = Array.isArray(id) ? id[0] : id;
   const router = useRouter();
   const { session } = useClientSession();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!orderId) {
+      router.push("/my-orders");
+      return;
+    }
     if (session?.user) fetchOrder();
-  }, [session, id]);
+  }, [session, orderId]);
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`/api/orders/${id}`);
+      const res = await fetch(`/api/orders/${orderId}`);
       const data = await res.json();
       if (data.success) setOrder(data.order);
       else toast.error(data.message || "Order not found");
@@ -106,7 +112,7 @@ export default function OrderDetailPage() {
           <div>
             <p className="text-sm text-muted-foreground">Total Amount</p>
             <p className="text-xl font-bold text-primary">
-              ${order.totalAmount?.toFixed(2)}
+              ${order.totalAmount.toFixed(2)}
             </p>
           </div>
         </div>

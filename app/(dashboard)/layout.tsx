@@ -8,12 +8,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="min-h-screen bg-background">
+      <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-8">{children}</div>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

@@ -38,6 +38,13 @@ export default function AllProductsClient({
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  useEffect(() => {
+    setSearch(initialSearch);
+    setCategoryFilter(initialCategory);
+    setSortBy(initialSort);
+    setCurrentPage(initialPage);
+  }, [initialSearch, initialCategory, initialSort, initialPage]);
+
   const updateFilters = (updates: Record<string, string | number>) => {
     const params = new URLSearchParams();
 
@@ -223,6 +230,7 @@ export default function AllProductsClient({
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
+              aria-label="Previous page"
               className="px-3 py-1 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -233,6 +241,7 @@ export default function AllProductsClient({
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === initialTotalPages}
+              aria-label="Next page"
               className="px-3 py-1 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               <ChevronRight className="w-4 h-4" />
