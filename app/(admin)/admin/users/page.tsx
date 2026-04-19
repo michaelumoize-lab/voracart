@@ -1,7 +1,7 @@
 //app/(admin)/users/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/lib/auth/helpers";
 import {
@@ -9,15 +9,10 @@ import {
   Filter,
   MoreVertical,
   Ban,
-  Shield,
-  Trash2,
   CheckCircle,
-  XCircle,
+  Trash2,
   Loader2,
   UserCheck,
-  UserX,
-  Mail,
-  Calendar,
   Package,
   ShoppingBag,
 } from "lucide-react";
@@ -70,19 +65,7 @@ export default function AdminUsersPage() {
 
   const limit = 10;
 
-  useEffect(() => {
-    if (!roleLoading && !isAdmin) {
-      router.push("/");
-    }
-  }, [isAdmin, roleLoading, router]);
-
-  useEffect(() => {
-    if (!roleLoading && isAdmin) {
-      fetchUsers();
-    }
-  }, [page, roleFilter, debouncedSearch, roleLoading, isAdmin]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -114,7 +97,19 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, roleFilter, debouncedSearch]);
+
+  useEffect(() => {
+    if (!roleLoading && !isAdmin) {
+      router.push("/");
+    }
+  }, [isAdmin, roleLoading, router]);
+
+  useEffect(() => {
+    if (!roleLoading && isAdmin) {
+      fetchUsers();
+    }
+  }, [page, roleFilter, debouncedSearch, roleLoading, isAdmin, fetchUsers]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     const user = users.find((item) => item.id === userId);
@@ -153,6 +148,7 @@ export default function AdminUsersPage() {
         throw new Error(data.message || "Failed to update role");
       }
     } catch (error) {
+      console.error("Role change error:", error);
       toast.error(
         error instanceof Error ? error.message : "Something went wrong",
       );
@@ -206,6 +202,7 @@ export default function AdminUsersPage() {
         toast.error(data.message || "Failed to ban user");
       }
     } catch (error) {
+      console.error("Ban error:", error);
       toast.error("Something went wrong");
     } finally {
       setActionLoading(false);
@@ -244,11 +241,8 @@ export default function AdminUsersPage() {
       } else {
         toast.error(data.message || "Failed to unban user");
       }
-        fetchUsers();
-      } else {
-        toast.error(data.message || "Failed to unban user");
-      }
     } catch (error) {
+      console.error("Unban error:", error);
       toast.error("Something went wrong");
     } finally {
       setActionLoading(false);
@@ -289,11 +283,8 @@ export default function AdminUsersPage() {
       } else {
         toast.error(data.message || "Failed to delete user");
       }
-        fetchUsers();
-      } else {
-        toast.error(data.message || "Failed to delete user");
-      }
     } catch (error) {
+      console.error("Delete error:", error);
       toast.error("Something went wrong");
     } finally {
       setActionLoading(false);

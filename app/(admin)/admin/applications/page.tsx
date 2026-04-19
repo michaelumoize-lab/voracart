@@ -30,8 +30,14 @@ const SellerApplications = () => {
   >("PENDING");
 
   const fetchApplications = async (): Promise<void> => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/seller-application/admin/list");
+      const params = new URLSearchParams();
+      if (filter !== "ALL") {
+        params.set("status", filter);
+      }
+      const url = `/api/seller-application/admin/list?${params.toString()}`;
+      const res = await fetch(url);
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }

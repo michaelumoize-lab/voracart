@@ -58,6 +58,7 @@ export default function AddProductForm() {
 
       if (imageFiles.length === 0) {
         toast.error("Please add at least one product image");
+        setLoading(false);
         return;
       }
 
@@ -67,17 +68,20 @@ export default function AddProductForm() {
 
       if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
         toast.error("Please enter a valid price greater than zero");
+        setLoading(false);
         return;
       }
 
       if (numericOfferPrice !== undefined) {
         if (!Number.isFinite(numericOfferPrice) || numericOfferPrice <= 0) {
           toast.error("Please enter a valid offer price");
+          setLoading(false);
           return;
         }
 
         if (numericOfferPrice >= numericPrice) {
           toast.error("Offer price must be less than the regular price");
+          setLoading(false);
           return;
         }
       }
@@ -93,6 +97,7 @@ export default function AddProductForm() {
 
       if (!uploadRes.ok) {
         toast.error("Image upload failed");
+        setLoading(false);
         return;
       }
 
@@ -120,6 +125,7 @@ export default function AddProductForm() {
 
       if (!productRes.ok) {
         toast.error("Failed to add product");
+        setLoading(false);
         return;
       }
 
@@ -127,6 +133,7 @@ export default function AddProductForm() {
 
       if (!productData.success) {
         toast.error(productData.message || "Failed to add product");
+        setLoading(false);
         return;
       }
 

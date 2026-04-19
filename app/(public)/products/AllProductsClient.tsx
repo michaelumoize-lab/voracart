@@ -1,7 +1,7 @@
 // app/shop/AllProductsClient.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import ProductCard from "@/components/Products/ProductCard";
 import { ProductGridSkeleton } from "@/components/Products/ProductsSkeletons";

@@ -15,11 +15,15 @@ const updateSettingsSchema = z.object({
     .min(5, "WhatsApp number must be at least 5 characters")
     .max(20, "WhatsApp number must be at most 20 characters")
     .regex(/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/, "Invalid phone number format"),
+  storeDescription: z.string().max(250, "Store description must be at most 250 characters").optional(),
 });
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
+  if (session.user.role !== "seller" && session.user.role !== "admin") {
+    return apiError("Only sellers can access settings", 403);
+  }
 
   try {
     const user = await prisma.user.findUnique({
@@ -27,6 +31,7 @@ export async function GET(request: NextRequest) {
       select: {
         name: true,
         whatsappNumber: true,
+        storeDescription: true,
       },
     });
 
@@ -34,6 +39,7 @@ export async function GET(request: NextRequest) {
       data: {
         storeName: user?.name || "",
         whatsappNumber: user?.whatsappNumber || "",
+        storeDescription: user?.storeDescription || "",
       },
     });
   } catch (error) {
@@ -45,26 +51,30 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
+  if (session.user.role !== "seller" && session.user.role !== "admin") {
+    return apiError("Only sellers can update settings", 403);
+  }
 
   try {
     const body = await request.json();
-    
+
     // Validate input with Zod schema
     const validationResult = updateSettingsSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       const errorMessages = validationResult.error.issues.map((issue) => issue.message).join(", ");
       return apiError(errorMessages, 400);
     }
-    
-    const { storeName, whatsappNumber } = validationResult.data;
-    
+
+    const { storeName, whatsappNumber, storeDescription } = validationResult.data;
+
     // Update user with validated data
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
         name: storeName,
         whatsappNumber,
+        storeDescription,
       },
     });
 

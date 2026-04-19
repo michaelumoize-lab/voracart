@@ -1,7 +1,7 @@
 // app/(dashboard)/my-orders/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Package, Eye } from "lucide-react";
 import { useClientSession } from "@/lib/use-session-client";
@@ -80,7 +80,7 @@ export default function MyOrdersPage() {
           No orders yet
         </h1>
         <p className="text-muted-foreground mb-6">
-          When you place orders, they'll appear here.
+          When you place orders, they&apos;ll appear here.
         </p>
         <Link
           href="/products"

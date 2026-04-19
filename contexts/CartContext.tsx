@@ -18,6 +18,7 @@ interface CartContextType {
   loading: boolean;
   addToCart: (productId: string) => Promise<void>;
   updateCartQuantity: (productId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
 }
 
@@ -124,6 +125,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearCart = async () => {
+    if (!session?.user) return;
+    const prevItems = { ...cartItems };
+    setCartItems({});
+    try {
+      await fetch("/api/cart/clear", { method: "POST" });
+      toast.success("Cart cleared");
+    } catch (err) {
+      // Revert
+      setCartItems(prevItems);
+      toast.error("Failed to clear cart");
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -132,6 +147,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         loading: loading || sessionLoading,
         addToCart,
         updateCartQuantity,
+        clearCart,
         refreshCart: fetchCart,
       }}
     >

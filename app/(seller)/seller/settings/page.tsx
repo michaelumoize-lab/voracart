@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 interface SellerSettings {
   storeName: string;
   whatsappNumber: string;
-  description: string;
+  storeDescription: string;
 }
 
 export default function SellerSettings() {
@@ -21,7 +21,7 @@ export default function SellerSettings() {
   const [settings, setSettings] = useState<SellerSettings>({
     storeName: "",
     whatsappNumber: "",
-    description: "",
+    storeDescription: "",
   });
 
   useEffect(() => {
@@ -43,7 +43,11 @@ export default function SellerSettings() {
       }
       const data = await res.json();
       if (data.success) {
-        setSettings(data.data);
+        setSettings({
+          storeName: data.data.storeName || "",
+          whatsappNumber: data.data.whatsappNumber || "",
+          storeDescription: data.data.storeDescription || "",
+        });
       } else {
         toast.error(data.message || "Failed to load settings");
       }
@@ -160,16 +164,16 @@ export default function SellerSettings() {
         {/* Store Description */}
         <div>
           <label
-            htmlFor="description"
+            htmlFor="storeDescription"
             className="block text-sm font-medium text-foreground mb-2"
           >
             <Info className="inline w-4 h-4 mr-2" />
             Store Description
           </label>
           <textarea
-            id="description"
-            name="description"
-            value={settings.description}
+            id="storeDescription"
+            name="storeDescription"
+            value={settings.storeDescription}
             onChange={handleChange}
             rows={4}
             placeholder="Tell customers about your store..."

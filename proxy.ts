@@ -1,9 +1,9 @@
-// middleware.ts
+// proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getServerSession } from "@/lib/get-session";
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const session = await getServerSession();
   const { pathname } = request.nextUrl;
 
@@ -14,7 +14,7 @@ export default async function middleware(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    
+
     if (session.user.role !== "admin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
@@ -27,7 +27,7 @@ export default async function middleware(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    
+
     if (session.user.role !== "seller" && session.user.role !== "admin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }

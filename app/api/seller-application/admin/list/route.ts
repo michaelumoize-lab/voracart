@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status");
 
   try {
-    const where: any = {};
+    const where: Prisma.SellerApplicationWhereInput = {};
     if (status && status !== "all") {
       where.status = status.toUpperCase();
     }

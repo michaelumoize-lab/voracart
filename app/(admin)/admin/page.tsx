@@ -237,7 +237,7 @@ export default function AdminDashboard() {
             </span>
             {(stats?.pendingApplications ?? 0) > 0 && (
               <span className="mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                {stats.pendingApplications} pending
+                {stats?.pendingApplications ?? 0} pending
               </span>
             )}
           </Link>
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
             </span>
             {(stats?.pendingOrders ?? 0) > 0 && (
               <span className="mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                {stats.pendingOrders} pending
+                {stats?.pendingOrders ?? 0} pending
               </span>
             )}
           </Link>

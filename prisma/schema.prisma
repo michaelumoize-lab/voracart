@@ -16,6 +16,7 @@ model User {
   updatedAt         DateTime           @updatedAt
   role              String             @default("buyer")
   whatsappNumber    String?
+  storeDescription  String?
   notifications     Notification[]
   orders            Order[]
   products          Product[]

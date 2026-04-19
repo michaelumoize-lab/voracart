@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
       totalOrders,
       pendingOrders,
       completedOrders,
-      totalRevenue,
-      monthlyRevenue,
+      orderItems,
+      monthlyOrderItems,
       pendingApplications,
       totalProducts,
     ] = await Promise.all([
@@ -31,22 +31,31 @@ export async function GET(request: NextRequest) {
       prisma.order.count(),
       prisma.order.count({ where: { status: "PENDING" } }),
       prisma.order.count({ where: { status: "DELIVERED" } }),
-      prisma.orderItem.aggregate({
+      prisma.orderItem.findMany({
         where: { order: { status: "DELIVERED" } },
-        _sum: { price: true },
+        select: { price: true, quantity: true },
       }),
-      prisma.orderItem.aggregate({
+      prisma.orderItem.findMany({
         where: {
           order: {
             status: "DELIVERED",
             createdAt: { gte: monthStart },
           },
         },
-        _sum: { price: true },
+        select: { price: true, quantity: true },
       }),
       prisma.sellerApplication.count({ where: { status: "PENDING" } }),
       prisma.product.count(),
     ]);
+
+    const totalRevenue = orderItems.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
+    const monthlyRevenue = monthlyOrderItems.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
 
     const stats = {
       totalUsers,
@@ -55,8 +64,8 @@ export async function GET(request: NextRequest) {
       totalOrders,
       pendingOrders,
       completedOrders,
-      totalRevenue: totalRevenue._sum.price || 0,
-      monthlyRevenue: monthlyRevenue._sum.price || 0,
+      totalRevenue,
+      monthlyRevenue,
       pendingApplications,
       totalProducts,
     };
