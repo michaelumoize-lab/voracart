@@ -94,7 +94,7 @@ export function SignInForm() {
     setLoading(true);
 
     try {
-      const { error } = await authClient.signIn.social({
+      const { data, error } = await authClient.signIn.social({
         provider,
         callbackURL: validatedRedirect,
       });

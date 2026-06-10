@@ -1,17 +1,21 @@
+// app/api/products/route.ts
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-helper";
 import { NextRequest } from "next/server";
 import { createProductSchema } from "@/lib/schemas";
 import { getServerSession } from "@/lib/get-session";
+import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
-// GET - Fetch products (keep only ONE)
+// GET - Fetch products
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const MAX_LIMIT = 100;
   const parsedLimit = parseInt(searchParams.get("limit") || "50", 10);
-  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 
-    ? 50 
-    : Math.min(parsedLimit, MAX_LIMIT);  
+  const limit = Number.isNaN(parsedLimit) || parsedLimit < 1
+    ? 50
+    : Math.min(parsedLimit, MAX_LIMIT);
+
   try {
     const products = await prisma.product.findMany({
       take: limit,
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-    
+
     return apiSuccess({ products });
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -38,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
-  
+
   // Only sellers and admins can create products
   if (session.user.role !== "seller" && session.user.role !== "admin") {
     return apiError("Only sellers can create products", 403);
@@ -47,26 +51,36 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validated = createProductSchema.parse(body);
-    
+
     const product = await prisma.product.create({
-        image: validated.image[0] ?? "", // Fallback or throw if required        name: validated.name,
+      data: {
+        name: validated.name,
         price: validated.price,
-        image: validated.image[0], // Take first image if array
+        image: validated.image[0] ?? "",
         description: validated.description,
         userId: session.user.id,
         category: validated.category,
-        offerPrice: validated.offerPrice,
+        offerPrice: validated.offerPrice ?? null, // ✅ Handle optional
         stock: 0,
       },
     });
-    
+
     return apiSuccess({ product }, 201);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create product error:", error);
-    
-    if (error.name === "ZodError") {
-      return apiError(error.issues[0].message, 400);
+
+    // Handle Zod validation errors
+    if (error instanceof ZodError) {
+      const message = error.issues.map((e) => e.message).join(", ");
+      return apiError(message, 400);
     }
-    return apiError("Failed to create product", 500);
+
+    // Handle Prisma errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return apiError("Database error occurred", 500);
+    }
+
+    // Handle generic errors
+    return apiError(error instanceof Error ? error.message : "Failed to create product", 500);
   }
 }

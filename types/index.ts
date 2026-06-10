@@ -1,22 +1,22 @@
-// types/index.ts or wherever your Product type is defined
+// types/index.ts
 export interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  image: string | string[];
   description?: string;
-  userId?: string;         
+  userId: string;
+  category: string;
+  offerPrice?: number;
+  stock: number;
+  rating?: number;
+  createdAt: string;
+  updatedAt: string;
   seller?: {
     id: string;
-    name: string;
+    name?: string | null; // ✅ Allow undefined or null
     whatsappNumber?: string;
   };
-  category?: string;
-  offerPrice?: number; 
-  rating?: number;  
-  stock?: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 interface ProductCardProps {
@@ -24,7 +24,7 @@ interface ProductCardProps {
     id: string;
     name: string;
     price: number;
-    image: string;
+    image: string | string[];
     seller?: { name: string };
     category?: string;
   };
@@ -67,6 +67,7 @@ export interface User {
   email: string;
   imageUrl: string;
   cartItems: Record<string, number>;
+  __v?: number;
 }
 
 export interface CartItems {

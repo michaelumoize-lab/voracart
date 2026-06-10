@@ -1,0 +1,542 @@
+{
+  "meta": {
+    "project": "voracart",
+    "generated_at": "2026-04-15T21:29:40",
+    "total_files": 199,
+    "total_folders": 83,
+    "excluded_dirs": [
+      ".cache",
+      ".git",
+      ".husky",
+      ".next",
+      ".turbo",
+      ".vercel",
+      "__pycache__",
+      "build",
+      "coverage",
+      "dist",
+      "node_modules",
+      "out"
+    ],
+    "excluded_extensions": [
+      ".lock",
+      ".log",
+      ".map"
+    ],
+    "excluded_files": [
+      ".DS_Store",
+      ".env.local",
+      ".env.production",
+      "Thumbs.db",
+      "desktop.ini"
+    ]
+  },
+  "structure": {
+    "__files__": [
+      ".env",
+      ".gitignore",
+      "AGENTS.md",
+      "CLAUDE.md",
+      "README.md",
+      "components.json",
+      "eslint.config.mjs",
+      "files-folder-structure.py",
+      "next-env.d.ts",
+      "next.config.ts",
+      "package-lock.json",
+      "package.json",
+      "postcss.config.mjs",
+      "prisma.config.ts",
+      "proxy.ts",
+      "tsconfig.json"
+    ],
+    "app": {
+      "__files__": [
+        "error.tsx",
+        "favicon.ico",
+        "files-folder-structure.py",
+        "globals.css",
+        "layout.tsx",
+        "not-found.tsx",
+        "project-structure.json"
+      ],
+      "(admin)": {
+        "__files__": [
+          "layout.tsx"
+        ],
+        "admin": {
+          "__files__": [
+            "page.tsx"
+          ],
+          "applications": {
+            "__files__": [
+              "page.tsx"
+            ]
+          },
+          "messages": {
+            "__files__": [
+              "page.tsx"
+            ]
+          },
+          "orders": {
+            "__files__": [
+              "page.tsx"
+            ]
+          },
+          "settings": {
+            "__files__": [
+              "page.tsx"
+            ]
+          },
+          "users": {
+            "__files__": [
+              "page.tsx"
+            ]
+          }
+        }
+      },
+      "(auth)": {
+        "__files__": [
+          "layout.tsx"
+        ],
+        "auth": {
+          "sign-in": {
+            "__files__": [
+              "page.tsx",
+              "sign-in-form.tsx"
+            ]
+          },
+          "sign-up": {
+            "__files__": [
+              "page.tsx",
+              "sign-up-form.tsx"
+            ]
+          }
+        }
+      },
+      "(cart)": {
+        "__files__": [
+          "layout.tsx"
+        ],
+        "cart": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "checkout": {
+          "__files__": [
+            "page.tsx"
+          ]
+        }
+      },
+      "(dashboard)": {
+        "__files__": [
+          "layout.tsx"
+        ],
+        "account": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "add-address": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "my-orders": {
+          "__files__": [
+            "layout.tsx"
+          ]
+        }
+      },
+      "(public)": {
+        "__files__": [
+          "layout.tsx",
+          "page.tsx"
+        ],
+        "about": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "become-seller": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "contact": {
+          "__files__": [
+            "page.tsx"
+          ]
+        },
+        "product": {
+          "__files__": [
+            "AllProductsClient.tsx",
+            "page.tsx"
+          ],
+          "[id]": {
+            "__files__": [
+              "ProductClient.tsx",
+              "page.tsx"
+            ]
+          }
+        }
+      },
+      "(seller)": {
+        "__files__": [
+          "layout.tsx"
+        ],
+        "seller": {
+          "__files__": [
+            "page.tsx"
+          ],
+          "add-product": {
+            "__files__": [
+              "page.tsx"
+            ]
+          },
+          "orders": {
+            "__files__": [
+              "page.tsx"
+            ],
+            "[id]": {
+              "__files__": [
+                "page.tsx"
+              ]
+            }
+          },
+          "products": {
+            "__files__": [
+              "page.tsx"
+            ],
+            "[id]": {
+              "__files__": [
+                "page.tsx"
+              ],
+              "edit": {
+                "__files__": [
+                  "page.tsx"
+                ]
+              }
+            }
+          },
+          "settings": {
+            "__files__": [
+              "page.tsx"
+            ]
+          }
+        }
+      },
+      "api": {
+        "admin": {
+          "dashboard": {
+            "stats": {
+              "__files__": [
+                "route.ts"
+              ]
+            }
+          },
+          "users": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "auth": {
+          "[...all]": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "set-role": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "cart": {
+          "get": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "update": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "notifications": {
+          "__files__": [
+            "route.ts"
+          ]
+        },
+        "products": {
+          "__files__": [
+            "route.ts"
+          ],
+          "[id]": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "seller": {
+          "application": {
+            "status": {
+              "__files__": [
+                "route.ts"
+              ]
+            }
+          },
+          "counts": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "dashboard": {
+            "stats": {
+              "__files__": [
+                "route.ts"
+              ]
+            }
+          },
+          "orders": {
+            "__files__": [
+              "route.ts"
+            ],
+            "[id]": {
+              "__files__": [
+                "route.ts"
+              ]
+            }
+          },
+          "products": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "settings": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "seller-application": {
+          "admin": {
+            "list": {
+              "__files__": [
+                "route.ts"
+              ]
+            },
+            "review": {
+              "__files__": [
+                "route.ts"
+              ]
+            }
+          },
+          "apply": {
+            "__files__": [
+              "route.ts"
+            ]
+          },
+          "status": {
+            "__files__": [
+              "route.ts"
+            ]
+          }
+        },
+        "upload": {
+          "__files__": [
+            "route.ts"
+          ]
+        }
+      },
+      "unauthorized": {
+        "__files__": [
+          "page.tsx"
+        ]
+      }
+    },
+    "assets": {
+      "__files__": [
+        "add_icon.png",
+        "add_icon.svg",
+        "apple_earphone_image.png",
+        "arrow_icon.svg",
+        "arrow_icon_white.svg",
+        "arrow_right_icon_colored.svg",
+        "assets.tsx",
+        "asus_laptop_image.png",
+        "bose_headphone_image.png",
+        "box_icon.svg",
+        "boy_with_laptop_image.png",
+        "cannon_camera_image.png",
+        "cart_icon.svg",
+        "checkmark.png",
+        "decrease_arrow.svg",
+        "facebook_icon.svg",
+        "girl_with_earphone_image.png",
+        "girl_with_headphone_image.png",
+        "header_headphone_image.png",
+        "header_macbook_image.png",
+        "header_playstation_image.png",
+        "heart_icon.svg",
+        "increase_arrow.svg",
+        "instagram_icon.svg",
+        "jbl_soundbox_image.png",
+        "logo.png",
+        "logo.svg",
+        "macbook_image.png",
+        "md_controller_image.png",
+        "menu_icon.svg",
+        "my_location_image.svg",
+        "order_icon.png",
+        "order_icon.svg",
+        "parcel_icon.svg",
+        "playstation_image.png",
+        "product_details_page_apple_earphone_image1.png",
+        "product_details_page_apple_earphone_image2.png",
+        "product_details_page_apple_earphone_image3.png",
+        "product_details_page_apple_earphone_image4.png",
+        "product_details_page_apple_earphone_image5.png",
+        "product_list_icon.svg",
+        "projector_image.png",
+        "redirect_icon.svg",
+        "samsung_s23phone_image.png",
+        "search_icon.svg",
+        "sm_controller_image.png",
+        "sony_airbuds_image.png",
+        "star_dull_icon.svg",
+        "star_icon.svg",
+        "twitter_icon.svg",
+        "upload_area.png",
+        "user_icon.svg",
+        "venu_watch_image.png"
+      ]
+    },
+    "components": {
+      "Admin": {
+        "__files__": [
+          "AdminHeader.tsx",
+          "AdminSid44ebar.tsx",
+          "AdminSidebar.tsx",
+          "SidebarCountBadge.tsx"
+        ]
+      },
+      "Landing": {
+        "__files__": [
+          "Banner.tsx",
+          "FeaturedProduct.tsx",
+          "Footer.tsx",
+          "HeaderSlider.tsx",
+          "HomeProducts.tsx",
+          "Navbar.tsx",
+          "NavbarClient.tsx",
+          "NewsLetter.tsx",
+          "NotificationBell.tsx"
+        ]
+      },
+      "Products": {
+        "__files__": [
+          "CategoryFilter.tsx",
+          "EmptyState.tsx",
+          "ImageLightbox.tsx",
+          "ProductCard.tsx",
+          "ProductsSkeletons.tsx"
+        ]
+      },
+      "Seller": {},
+      "icons": {
+        "__files__": [
+          "GoogleIcon.tsx"
+        ]
+      },
+      "ui": {
+        "__files__": [
+          "button.tsx",
+          "card.tsx",
+          "checkbox.tsx",
+          "five-star-rating.tsx",
+          "form.tsx",
+          "global-loader.tsx",
+          "input.tsx",
+          "label.tsx",
+          "loading-button.tsx",
+          "mode-toggle.tsx",
+          "password-input.tsx"
+        ]
+      }
+    },
+    "contexts": {
+      "__files__": [
+        "CartContext.tsx"
+      ]
+    },
+    "hooks": {
+      "__files__": [
+        "useCart.ts",
+        "useProducts.ts"
+      ]
+    },
+    "lib": {
+      "__files__": [
+        "api-helper.ts",
+        "auth-client.ts",
+        "auth.ts",
+        "authAdmin.ts",
+        "authSeller.ts",
+        "cloudinary.ts",
+        "constants.ts",
+        "get-session.ts",
+        "helpers.client.ts",
+        "helpers.server.ts",
+        "notifications.ts",
+        "prisma.ts",
+        "schemas.ts",
+        "use-session-client.ts",
+        "utils.ts",
+        "validation.ts"
+      ],
+      "auth": {
+        "__files__": [
+          "helpers.ts"
+        ]
+      }
+    },
+    "prisma": {
+      "__files__": [
+        "schema.prisma"
+      ]
+    },
+    "providers": {
+      "__files__": [
+        "ThemeProvider.tsx"
+      ]
+    },
+    "public": {
+      "__files__": [
+        "file.svg",
+        "globe.svg",
+        "next.svg",
+        "vercel.svg",
+        "window.svg"
+      ]
+    },
+    "types": {
+      "__files__": [
+        "index.ts",
+        "navbar.ts"
+      ]
+    },
+    "utils": {
+      "__files__": [
+        "context-builder.py",
+        "create-file.py",
+        "files-folder-structure.py",
+        "gen-api.py",
+        "gen-page.py"
+      ]
+    }
+  }
+}

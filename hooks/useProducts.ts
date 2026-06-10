@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  description?: string;
-}
+import { Product } from "@/types";
 
 export function useProducts(limit?: number) {
   const [products, setProducts] = useState<Product[]>([]);

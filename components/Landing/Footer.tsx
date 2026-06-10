@@ -35,16 +35,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 py-14 md:grid-cols-[2fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div className="flex flex-col gap-5">
-            <Link href="/" className="shrink-0">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={400}
-                height={127}
-                className="w-36 md:w-44 object-contain"
-                style={{ objectPosition: "left center" }}
-                priority
-              />
+            <Link href="/" className="shrink-0 text-xl font-bold text-primary">
+              VoraCart
             </Link>
 
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">

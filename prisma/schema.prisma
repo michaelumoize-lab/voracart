@@ -16,7 +16,9 @@ model User {
   updatedAt         DateTime           @updatedAt
   role              String             @default("buyer")
   whatsappNumber    String?
+  storeDescription  String?
   notifications     Notification[]
+  orders            Order[]
   products          Product[]
   cartItems         CartItem[]
   sellerApplication SellerApplication?
@@ -93,6 +95,7 @@ model Product {
   rating      Float?     @default(0)
   seller User @relation(fields: [userId], references: [id], onDelete: Cascade)
   cartItems   CartItem[]
+  orderItems  OrderItem[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -103,7 +106,7 @@ model Product {
 model SellerApplication {
   id          String    @id @default(cuid())
   userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeName   String
   phone       String
   description String?
@@ -140,6 +143,7 @@ enum NotificationType {
   APPLICATION_APPROVED
   APPLICATION_REJECTED
   NEW_APPLICATION
+  NEW_PRODUCT
 }
 
 model Notification {
@@ -156,4 +160,59 @@ model Notification {
   @@index([userId])
   @@index([userId, read])
   @@map("notifications")
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String      @default("PENDING")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+
+  shippingName     String?
+  shippingPhone    String?
+  shippingAddress  String?
+  shippingCity     String?
+  shippingState    String?
+  shippingPincode  String?
+  
+  totalAmount      Float?
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  itemStatus String   @default("PENDING") 
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model SystemSettings {
+  id                    Int      @id
+  siteName              String
+  siteDescription       String?
+  contactEmail          String
+  contactPhone          String?
+  maintenanceMode       Boolean
+  allowNewRegistrations Boolean
+  maxOrderAmount        Float
+  currency              String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

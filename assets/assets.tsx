@@ -1,3 +1,4 @@
+import React, { JSX } from 'react';
 import { StaticImageData } from "next/image";
 import logo from "./logo.png";
 import search_icon from "./search_icon.svg";
@@ -151,7 +152,7 @@ export const assets: Assets = {
   product_details_page_apple_earphone_image5,
 };
 
-export const BagIcon = (): JSX.Element => (
+export const BagIcon = () => (
   <svg
     className="w-5 h-5 text-gray-800"
     aria-hidden="true"
@@ -171,7 +172,7 @@ export const BagIcon = (): JSX.Element => (
   </svg>
 );
 
-export const CartIcon = (): JSX.Element => (
+export const CartIcon = () => (
   <svg
     width="18"
     height="18"
@@ -192,7 +193,7 @@ export const CartIcon = (): JSX.Element => (
   </svg>
 );
 
-export const BoxIcon = (): JSX.Element => (
+export const BoxIcon = () => (
   <svg
     className="w-5 h-5 text-gray-800"
     aria-hidden="true"
@@ -212,7 +213,7 @@ export const BoxIcon = (): JSX.Element => (
   </svg>
 );
 
-export const HomeIcon = (): JSX.Element => (
+export const HomeIcon = () => (
   <svg
     className="w-5 h-5 text-gray-800"
     aria-hidden="true"
@@ -232,7 +233,7 @@ export const HomeIcon = (): JSX.Element => (
   </svg>
 );
 
-export const productsDummyData: Product[] = [
+export const productsDummyData: any[] = [
   {
     _id: "67a1f4e43f34a77b6dde9144",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
@@ -398,7 +399,7 @@ export const userDummyData: User = {
   __v: 0,
 };
 
-export const orderDummyData: Order[] = [
+export const orderDummyData: any[] = [
   {
     _id: "67a20934b3db72db5cc77b2b",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
@@ -440,7 +441,7 @@ export const orderDummyData: Order[] = [
   },
 ];
 
-export const addressDummyData: Address[] = [
+export const addressDummyData: any[] = [
   {
     _id: "67a1e4233f34a77b6dde9055",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
