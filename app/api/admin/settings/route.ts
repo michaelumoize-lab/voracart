@@ -49,7 +49,12 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return apiError("Invalid JSON body", 400);
+        }
         const validatedSettings = settingsSchema.parse(body);
 
         // In a real application, you'd save these to a database

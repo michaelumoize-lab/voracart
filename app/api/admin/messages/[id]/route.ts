@@ -19,9 +19,13 @@ export async function PATCH(
 
     try {
         const { id } = await params;
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return apiError("Invalid JSON body", 400);
+        }
         const { isActive } = updateMessageSchema.parse(body);
-
         // Simulated database update
         const message = {
             id,

@@ -1,5 +1,6 @@
-// app/shop/AllProductsClient.tsx
 "use client";
+
+// app/shop/AllProductsClient.tsx
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";

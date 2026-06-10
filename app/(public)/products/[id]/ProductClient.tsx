@@ -1,5 +1,6 @@
-// app/(public)/products/[id]/ProductClient.tsx
 "use client";
+
+// app/(public)/products/[id]/ProductClient.tsx
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

@@ -1,4 +1,3 @@
-// components/ui/five-star-rating.tsx
 "use client";
 
 import { Star, StarHalf } from "lucide-react";

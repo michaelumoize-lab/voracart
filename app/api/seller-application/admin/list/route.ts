@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { apiSuccess, apiError } from "@/lib/api-helper";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/get-session";
+import { Prisma } from "@prisma/client"; // ✅ Add this import
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession();

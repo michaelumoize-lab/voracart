@@ -48,9 +48,13 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return apiError("Invalid JSON body", 400);
+        }
         const validatedData = createMessageSchema.parse(body);
-
         // In a real app, you'd save to database and send notifications
         // For now, just validate and return success
         const message = {

@@ -18,10 +18,9 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get("status");
-        const page = parseInt(searchParams.get("page") || "1");
-        const limit = parseInt(searchParams.get("limit") || "10");
+        const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+        const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10", 10)));
         const skip = (page - 1) * limit;
-
         const where: any = {};
         if (status && status !== "all") {
             where.status = status.toUpperCase();
@@ -69,10 +68,9 @@ export async function GET(request: NextRequest) {
                 pincode: order.shippingPincode,
             },
             customer: {
-                name: order.user.name,
-                email: order.user.email,
-            },
-            items: order.items.map(item => ({
+                name: order.user?.name ?? null,
+                email: order.user?.email ?? null,
+            }, items: order.items.map(item => ({
                 id: item.id,
                 productId: item.productId,
                 productName: item.product.name,
@@ -115,14 +113,7 @@ export async function PATCH(request: NextRequest) {
         const order = await prisma.order.update({
             where: { id: orderId },
             data: { status },
-            include: {
-                user: { select: { name: true, email: true } },
-                items: {
-                    include: {
-                        product: { select: { name: true, sellerId: true } },
-                    },
-                },
-            },
+            select: { id: true, status: true, updatedAt: true },
         });
 
         return apiSuccess({

@@ -1,5 +1,6 @@
-// app/error.tsx
 "use client";
+
+// app/error.tsx
 
 import { useEffect } from "react";
 import Link from "next/link";

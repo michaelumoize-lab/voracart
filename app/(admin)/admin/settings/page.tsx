@@ -44,6 +44,8 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success) {
         setSettings(data.settings);
+      } else {
+        throw new Error(data.message || "Failed to fetch settings");
       }
     } catch (error) {
       console.error("Fetch settings error:", error);
@@ -66,8 +68,13 @@ export default function AdminSettingsPage() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success("Settings saved successfully");
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+      } else {
+        throw new Error(data.message || "Failed to save settings");
       }
+      toast.success("Settings saved successfully");
     } catch (error) {
       console.error("Save settings error:", error);
       toast.error("Failed to save settings");
@@ -229,21 +236,23 @@ export default function AdminSettingsPage() {
                 }
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maxOrderAmount">Maximum Order Amount (₹)</Label>
-              <Input
-                id="maxOrderAmount"
-                type="number"
-                value={settings.maxOrderAmount}
-                onChange={(e) =>
-                  handleInputChange(
-                    "maxOrderAmount",
-                    parseInt(e.target.value) || 0,
-                  )
-                }
-                placeholder="50000"
-              />
+            <Label htmlFor="maxOrderAmount">
+              Maximum Order Amount ({settings.currency})
+            </Label>
+            <Input
+              id="maxOrderAmount"
+              type="number"
+              min={0}
+              value={settings.maxOrderAmount}
+              onChange={(e) =>
+                handleInputChange(
+                  "maxOrderAmount",
+                  Math.max(0, parseInt(e.target.value) || 0),
+                )
+              }
+              placeholder="50000"
+            />
+            <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Maximum allowed order amount per transaction
               </p>

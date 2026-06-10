@@ -51,6 +51,7 @@ export default function CheckoutPage() {
     const productIds = Object.keys(cartItems);
     if (productIds.length === 0) {
       router.push("/cart");
+      setLoading(false); // ✅ stop loading before return
       return;
     }
 
@@ -72,6 +73,11 @@ export default function CheckoutPage() {
         }),
       );
       const validProducts = productsData.filter((product) => product !== null);
+      if (validProducts.length === 0) {
+        toast.error("Some items in your cart are no longer available");
+        router.push("/cart");
+        return;
+      }
       setProducts(validProducts);
     } catch (error) {
       console.error("Failed to load cart items", error);
@@ -92,7 +98,7 @@ export default function CheckoutPage() {
     (sum, p) => sum + getItemPrice(p) * (cartItems[p.id] || 0),
     0,
   );
-  const total = subtotal; // + delivery fee if any
+  const total = subtotal;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -130,36 +136,56 @@ export default function CheckoutPage() {
           }),
         });
 
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || `Order failed with status ${res.status}`,
+          );
+        }
+
         const data = await res.json();
         if (!data.success) throw new Error(data.message || "Order failed");
 
-        // ✅ Get unique seller WhatsApp numbers from all products
+        // ✅ Collect unique seller WhatsApp numbers
         const sellerNumbers = Array.from(
           new Set(
             products
-              .map((p) => p.seller?.whatsappNumber?.trim())
-              .filter((value): value is string => Boolean(value)),
+              .map((p) => p.seller?.whatsappNumber)
+              .filter((num): num is string => !!num && num.trim().length > 0),
           ),
         );
 
-        // ✅ Format WhatsApp number (remove non-digit characters and add +)
+        // Build order items string for WhatsApp (plain text)
+        const orderItems = products
+          .map((p) => {
+            const qty = cartItems[p.id];
+            const price = getItemPrice(p);
+            return `${p.name} x${qty} = ${(price * qty).toFixed(2)}`;
+          })
+          .join("\n");
+
+        const baseMessage = `🛒 *New Order from VoraCart*
+
+*Customer:* ${formData.fullName}
+*Phone:* ${formData.phone}
+*Address:* ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}
+
+*Items:*
+${orderItems}
+
+*Total:* $${total.toFixed(2)}
+
+*Order ID:* ${data.order.id.slice(-8)}
+
+Thank you for shopping with us!`;
+
+        const encodedMessage = encodeURIComponent(baseMessage);
         const formatWhatsAppNumber = (num: string) => {
           const cleaned = num.replace(/\D/g, "");
           return cleaned ? `+${cleaned}` : "";
         };
 
-        // Prepare order details message
-        const orderItems = products
-          .map((p) => {
-            const qty = cartItems[p.id];
-            const price = getItemPrice(p);
-            return `${encodeURIComponent(p.name)} x${qty} = $${(price * qty).toFixed(2)}`;
-          })
-          .join("%0A");
-
-        const baseMessage = `🛒 *New Order from VoraCart*%0A%0A*Customer:* ${encodeURIComponent(formData.fullName)}%0A*Phone:* ${encodeURIComponent(formData.phone)}%0A*Address:* ${encodeURIComponent(formData.address)}, ${encodeURIComponent(formData.city)}, ${encodeURIComponent(formData.state)} - ${encodeURIComponent(formData.pincode)}%0A%0A*Items:*%0A${orderItems}%0A%0A*Total:* $${total.toFixed(2)}%0A%0A*Order ID:* ${data.order.id.slice(-8)}%0A%0AThank you for shopping with us!`;
-
-        // ✅ Handle seller contact cases
+        // Handle seller contact cases
         if (sellerNumbers.length === 0) {
           toast.success(
             "Order placed! Seller contact is not configured. Please check My Orders or contact support.",
@@ -168,7 +194,6 @@ export default function CheckoutPage() {
           router.push("/my-orders");
         } else if (sellerNumbers.length === 1) {
           const whatsappNumber = formatWhatsAppNumber(sellerNumbers[0]);
-
           if (!whatsappNumber) {
             toast.success(
               "Order placed! Seller contact is not configured. Please check My Orders or contact support.",
@@ -176,7 +201,7 @@ export default function CheckoutPage() {
             clearCart();
             router.push("/my-orders");
           } else {
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${baseMessage}`;
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
             window.open(whatsappUrl, "_blank");
             toast.success("Order placed! Redirecting to WhatsApp...");
             clearCart();
