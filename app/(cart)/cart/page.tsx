@@ -148,7 +148,7 @@ export default function CartPage() {
           Your cart is empty
         </h1>
         <p className="text-muted-foreground mb-6">
-          Looks like you haven't added any items yet.
+          Looks like you haven&apos;t added any items yet.
         </p>
         <Link
           href="/products"
@@ -210,14 +210,10 @@ export default function CartPage() {
                     </button>
                     <span className="w-8 text-center">{quantity}</span>
                     <button
-                      onClick={() => {
-                        if (quantity >= product.stock) return;
-                        handleUpdateQuantity(product.id, quantity + 1);
-                      }}
-                      disabled={
-                        actionLoading === product.id ||
-                        quantity >= product.stock
+                      onClick={() =>
+                        handleUpdateQuantity(product.id, quantity + 1)
                       }
+                      disabled={actionLoading === product.id}
                       className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-accent disabled:opacity-50"
                     >
                       {actionLoading === product.id ? (
