@@ -3,7 +3,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  image: string | string[];
   description?: string;
   userId: string;
   category: string;
@@ -24,7 +24,7 @@ interface ProductCardProps {
     id: string;
     name: string;
     price: number;
-    image: string;
+    image: string | string[];
     seller?: { name: string };
     category?: string;
   };
@@ -67,6 +67,7 @@ export interface User {
   email: string;
   imageUrl: string;
   cartItems: Record<string, number>;
+  __v?: number;
 }
 
 export interface CartItems {

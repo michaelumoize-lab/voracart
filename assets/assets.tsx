@@ -233,7 +233,7 @@ export const HomeIcon = () => (
   </svg>
 );
 
-export const productsDummyData: Product[] = [
+export const productsDummyData: any[] = [
   {
     _id: "67a1f4e43f34a77b6dde9144",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
@@ -399,7 +399,7 @@ export const userDummyData: User = {
   __v: 0,
 };
 
-export const orderDummyData: Order[] = [
+export const orderDummyData: any[] = [
   {
     _id: "67a20934b3db72db5cc77b2b",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
@@ -441,7 +441,7 @@ export const orderDummyData: Order[] = [
   },
 ];
 
-export const addressDummyData: Address[] = [
+export const addressDummyData: any[] = [
   {
     _id: "67a1e4233f34a77b6dde9055",
     userId: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",

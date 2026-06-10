@@ -55,15 +55,22 @@ export async function PUT(request: NextRequest) {
         } catch {
             return apiError("Invalid JSON body", 400);
         }
-        const validatedSettings = settingsSchema.parse(body);
+            const validatedSettings = settingsSchema.parse(body);
 
-        // In a real application, you'd save these to a database
-        // For now, we'll just validate and return success
-        // You could create a SystemSettings table to persist these
+        const settings = await prisma.systemSettings.upsert({
+            where: { id: 1 },
+            create: {
+                id: 1,
+                ...validatedSettings,
+            },
+            update: {
+                ...validatedSettings,
+            },
+        });
 
         return apiSuccess({
-            settings: validatedSettings,
-            message: "Settings updated successfully"
+            settings,
+            message: "Settings updated successfully",
         });
     } catch (error) {
         console.error("Update settings error:", error);

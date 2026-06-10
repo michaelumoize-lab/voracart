@@ -39,7 +39,7 @@ export default function ProductClient({
   const { withLoading } = useLoading();
 
   const [mainImage, setMainImage] = useState<string | null>(
-    product?.image ?? null,
+    Array.isArray(product?.image) ? product.image[0] ?? null : product?.image ?? null,
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);

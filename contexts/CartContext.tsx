@@ -130,12 +130,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const prevItems = { ...cartItems };
     setCartItems({});
     try {
-      await fetch("/api/cart/clear", { method: "POST" });
+      const response = await fetch("/api/cart/clear", { method: "POST" });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to clear cart: ${response.status} ${response.statusText}${
+            errorText ? ` - ${errorText}` : ""
+          }`,
+        );
+      }
       toast.success("Cart cleared");
     } catch (err) {
       // Revert
       setCartItems(prevItems);
-      toast.error("Failed to clear cart");
+      toast.error(err instanceof Error ? err.message : "Failed to clear cart");
     }
   };
 

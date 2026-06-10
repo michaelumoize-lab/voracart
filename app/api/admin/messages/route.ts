@@ -10,7 +10,10 @@ const createMessageSchema = z.object({
     title: z.string().min(1, "Title is required"),
     message: z.string().min(1, "Message is required"),
     targetAudience: z.enum(["all", "sellers", "buyers", "admins"]),
-    expiresAt: z.string().optional(),
+    expiresAt: z.string().optional().refine(
+      (value) => !value || !isNaN(Date.parse(value)),
+      { message: "expiresAt must be a valid date" },
+    ),
 });
 
 export async function GET() {

@@ -48,14 +48,23 @@ export async function GET(request: NextRequest) {
       prisma.product.count(),
     ]);
 
-    const totalRevenue = orderItems.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0,
-    );
-    const monthlyRevenue = monthlyOrderItems.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0,
-    );
+    const totalRevenue = orderItems.reduce((sum, item) => {
+      const price = item.price ?? 0;
+      const priceNumber =
+        typeof price === "object" && price !== null && typeof (price as any).toNumber === "function"
+          ? (price as any).toNumber()
+          : Number(price);
+      return sum + priceNumber * item.quantity;
+    }, 0);
+
+    const monthlyRevenue = monthlyOrderItems.reduce((sum, item) => {
+      const price = item.price ?? 0;
+      const priceNumber =
+        typeof price === "object" && price !== null && typeof (price as any).toNumber === "function"
+          ? (price as any).toNumber()
+          : Number(price);
+      return sum + priceNumber * item.quantity;
+    }, 0);
 
     const stats = {
       totalUsers,

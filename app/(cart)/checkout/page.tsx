@@ -173,7 +173,7 @@ export default function CheckoutPage() {
 *Items:*
 ${orderItems}
 
-*Total:* $${total.toFixed(2)}
+*Total:* ₦${total.toFixed(2)}
 
 *Order ID:* ${data.order.id.slice(-8)}
 

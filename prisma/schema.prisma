@@ -202,3 +202,17 @@ model OrderItem {
   @@index([productId])
   @@map("order_items")
 }
+
+model SystemSettings {
+  id                    Int      @id
+  siteName              String
+  siteDescription       String?
+  contactEmail          String
+  contactPhone          String?
+  maintenanceMode       Boolean
+  allowNewRegistrations Boolean
+  maxOrderAmount        Float
+  currency              String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
