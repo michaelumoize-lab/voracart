@@ -20,6 +20,14 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
+  trustedOrigins: [
+    "http://localhost:3000",           // Local development
+    "http://localhost:3001",           // Alternative local port
+    "https://voracart.vercel.app",     // Your production URL
+    "https://voracart-git-main.vercel.app", // Preview deployments (if needed)
+    "https://voracart-*.vercel.app",   // ✅ Wildcard for all preview deploys
+  ],
+
   databaseHooks: {
     user: {
       create: {
