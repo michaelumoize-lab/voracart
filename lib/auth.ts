@@ -11,28 +11,34 @@ import { waitUntil } from "@vercel/functions";
 import { render } from "@react-email/render";
 import { EmailVerificationEmail, ResetPasswordEmail } from "@/components/email";
 
-// import { mongodbAdapter } from "better-auth/adapters/mongodb";
-// import { getClientPromise } from "./mongoose";
-
-// const client = await getClientPromise();
-// const db = client.db("better-auth");
-
 const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET;
 if (!BETTER_AUTH_SECRET) {
   throw new Error("BETTER_AUTH_SECRET environment variable is required");
 }
 
 export const auth = betterAuth({
-  // database: mongodbAdapter(db, { client }),
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
   secret: BETTER_AUTH_SECRET,
   plugins: [nextCookies(), admin(), multiSession()],
-  trustedOrigins: [
-    "http://localhost:3000",
-    "https://better-auth-dun.vercel.app",
-  ],
+  trustedOrigins: ["http://localhost:3000", "https://voracart.vercel.app"],
+
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          return {
+            data: {
+              ...user,
+              role: "buyer",
+            },
+          };
+        },
+      },
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
@@ -43,7 +49,7 @@ export const auth = betterAuth({
           appName: "Better Auth",
           expirationMinutes: 60,
           poweredBy: false,
-        })
+        }),
       );
 
       const emailPromise = sendEmail({
@@ -63,7 +69,13 @@ export const auth = betterAuth({
   emailVerification: {
     enabled: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { email: string };
+      url: string;
+    }) => {
       const html = await render(
         EmailVerificationEmail({
           url,
@@ -71,7 +83,7 @@ export const auth = betterAuth({
           appName: "Better Auth",
           expirationMinutes: 60,
           poweredBy: false,
-        })
+        }),
       );
 
       const emailPromise = sendEmail({
@@ -89,6 +101,14 @@ export const auth = betterAuth({
     },
   },
   user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "buyer",
+        input: false,
+      },
+    },
     deleteUser: {
       enabled: true,
       sendDeleteAccountVerification: async ({ user, url }) => {
@@ -132,6 +152,11 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      mapProfileToUser: () => {
+        return {
+          role: "buyer",
+        };
+      },
     },
   },
   advanced: {
