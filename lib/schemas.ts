@@ -19,6 +19,10 @@ export const createProductSchema = z.object({
     .min(1, "At least one image is required"),
 });
 
+export const updateProductSchema = createProductSchema.partial().extend({
+  id: z.string().min(1, "Product ID is required"),
+});
+
 // Address
 export const createAddressSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),

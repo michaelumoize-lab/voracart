@@ -89,9 +89,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Revert
       setCartItems((prev) => {
         const updated = { ...prev };
-        const reverted = (updated[productId] || 1) - 1;
-        if (reverted <= 0) delete updated[productId];
-        else updated[productId] = reverted;
+        if (currentQty <= 0) {
+          delete updated[productId];
+        } else {
+          updated[productId] = currentQty;
+        }
         return updated;
       });
       toast.error(err instanceof Error ? err.message : "Could not update cart");
@@ -119,8 +121,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       else if (quantity > prevQty)
         toast.success(`Quantity increased to ${quantity}`);
     } catch (err) {
-      // Revert
-      setCartItems((prev) => ({ ...prev, [productId]: prevQty }));
+      setCartItems((prev) => {
+        const updated = { ...prev };
+        if (prevQty <= 0) {
+          delete updated[productId];
+        } else {
+          updated[productId] = prevQty;
+        }
+        return updated;
+      });
       toast.error(err instanceof Error ? err.message : "Could not update cart");
     }
   };

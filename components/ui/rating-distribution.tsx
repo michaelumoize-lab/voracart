@@ -19,13 +19,14 @@ export function RatingDistribution({
   totalReviews,
   ratingCounts,
 }: RatingDistributionProps) {
-  const percentages = ratingCounts
-    ? Object.entries(ratingCounts).map(([stars, count]) => ({
-        stars: parseInt(stars),
-        percentage: (count / totalReviews) * 100,
-        count,
-      }))
-    : [];
+  const percentages =
+    ratingCounts && totalReviews > 0
+      ? Object.entries(ratingCounts).map(([stars, count]) => ({
+          stars: parseInt(stars),
+          percentage: (count / totalReviews) * 100,
+          count,
+        }))
+      : [];
 
   return (
     <div className="space-y-2">

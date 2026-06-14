@@ -14,13 +14,24 @@ const sizeClasses = {
   lg: "h-5 w-5",
 };
 
-export function FiveStarRating({ rating, size = "sm", showNumber = false }: FiveStarRatingProps) {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+export function FiveStarRating({
+  rating,
+  size = "sm",
+  showNumber = false,
+}: FiveStarRatingProps) {
+  const normalizedRating = Number.isFinite(rating)
+    ? Math.min(Math.max(rating, 0), 5)
+    : 0;
+  const fullStars = Math.floor(normalizedRating);
+  const hasHalfStar = normalizedRating % 1 >= 0.5;
   const starSize = sizeClasses[size];
 
   return (
-    <div className="flex items-center gap-1" role="img" aria-label={`Rating: ${rating.toFixed(1)} out of 5 stars`}>
+    <div
+      className="flex items-center gap-1"
+      role="img"
+      aria-label={`Rating: ${rating.toFixed(1)} out of 5 stars`}
+    >
       <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, index) => {
           if (index < fullStars) {
@@ -38,12 +49,7 @@ export function FiveStarRating({ rating, size = "sm", showNumber = false }: Five
               />
             );
           } else {
-            return (
-              <Star
-                key={index}
-                className={`${starSize} text-gray-300`}
-              />
-            );
+            return <Star key={index} className={`${starSize} text-gray-300`} />;
           }
         })}
       </div>
@@ -52,5 +58,6 @@ export function FiveStarRating({ rating, size = "sm", showNumber = false }: Five
           {rating.toFixed(1)}
         </span>
       )}
-    </div>  );
+    </div>
+  );
 }

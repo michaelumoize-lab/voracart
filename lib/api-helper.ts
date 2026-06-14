@@ -45,35 +45,36 @@ export const validateBody = async <T>(
 // Optional: Simple rate limiting without Arcjet
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-// Cleanup stale entries periodically to prevent memory leaks
-const CLEANUP_INTERVAL_MS = 60000;
-setInterval(() => {
+export const checkRateLimit = (
+  ip: string,
+  limit: number = 10,
+  windowMs: number = 60000,
+) => {
   const now = Date.now();
-  for (const [ip, record] of rateLimitMap) {
+
+  // Lazy cleanup of expired records to avoid timers in serverless environments
+  for (const [key, record] of rateLimitMap) {
     if (now > record.resetAt) {
-      rateLimitMap.delete(ip);
+      rateLimitMap.delete(key);
     }
   }
-}, CLEANUP_INTERVAL_MS);
-
-export const checkRateLimit = (ip: string, limit: number = 10, windowMs: number = 60000) => {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
-  
+
   if (!record) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
     return { blocked: false };
   }
-  
+
   if (now > record.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
     return { blocked: false };
   }
-  
+
   if (record.count >= limit) {
     return { blocked: true };
   }
-  
+
   record.count++;
   return { blocked: false };
 };

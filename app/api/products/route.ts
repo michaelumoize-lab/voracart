@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-helper";
 import { NextRequest } from "next/server";
-import { createProductSchema } from "@/lib/schemas";
+import { createProductSchema, updateProductSchema } from "@/lib/schemas";
 import { getServerSession } from "@/lib/get-session";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
@@ -42,12 +42,21 @@ export async function GET(request: NextRequest) {
 
     if (minPrice || maxPrice) {
       where.price = {};
-      if (minPrice) where.price.gte = parseFloat(minPrice);
-      if (maxPrice) where.price.lte = parseFloat(maxPrice);
+      if (minPrice) {
+        const min = parseFloat(minPrice);
+        if (!isNaN(min)) where.price.gte = min;
+      }
+      if (maxPrice) {
+        const max = parseFloat(maxPrice);
+        if (!isNaN(max)) where.price.lte = max;
+      }
     }
 
     if (minRating) {
-      where.rating = { gte: parseFloat(minRating) };
+      const rating = parseFloat(minRating);
+      if (!isNaN(rating)) {
+        where.rating = { gte: rating };
+      }
     }
 
     // Build order by
@@ -122,21 +131,18 @@ export async function POST(request: NextRequest) {
     const store = await prisma.store.findUnique({
       where: { userId: session.user.id },
     });
-
-    if (!store) {
-      return apiError(
-        "Seller store not found. Please complete seller application first.",
-        400,
-      );
-    }
-
-    // Generate slug from name
     const slug = validated.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    // Create the product
+    if (!slug) {
+      return apiError(
+        "Product name must contain at least one alphanumeric character",
+        400,
+      );
+    }
+
     const product = await prisma.product.create({
       data: {
         storeId: store.id,
@@ -172,7 +178,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Transform to match frontend expected format
+    // Transform products to match frontend expected format
     const transformedProduct = {
       ...product,
       price: Number(product.price),
@@ -218,7 +224,8 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, ...updateData } = body;
+    const validated = updateProductSchema.parse(body);
+    const { id, ...updateData } = validated;
 
     if (!id) {
       return apiError("Product ID is required", 400);
@@ -263,17 +270,18 @@ export async function PUT(request: NextRequest) {
         category: updateData.category,
         tags: updateData.tags,
         isActive: updateData.isActive,
-        // Handle images update if provided
-        ...(updateData.image && {
-          images: {
-            deleteMany: {},
-            create: updateData.image.map((url: string, index: number) => ({
-              url,
-              alt: `${updateData.name || existingProduct.name} image ${index + 1}`,
-              position: index,
-            })),
-          },
-        }),
+        // Handle images update only when a non-empty image array is provided
+        ...(Array.isArray(updateData.image) &&
+          updateData.image.length > 0 && {
+            images: {
+              deleteMany: {},
+              create: updateData.image.map((url: string, index: number) => ({
+                url,
+                alt: `${updateData.name || existingProduct.name} image ${index + 1}`,
+                position: index,
+              })),
+            },
+          }),
       },
       include: {
         images: true,
@@ -302,6 +310,12 @@ export async function PUT(request: NextRequest) {
     return apiSuccess({ product: transformedProduct });
   } catch (error) {
     console.error("Update product error:", error);
+
+    if (error instanceof ZodError) {
+      const message = error.issues.map((issue) => issue.message).join(", ");
+      return apiError(message, 400);
+    }
+
     return apiError("Failed to update product", 500);
   }
 }

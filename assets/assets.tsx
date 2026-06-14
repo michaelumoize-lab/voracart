@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import React, { JSX } from "react";
 import { StaticImageData } from "next/image";
 import logo from "./logo.png";
 import search_icon from "./search_icon.svg";
@@ -390,13 +390,18 @@ export const productsDummyData: any[] = [
 ];
 
 export const userDummyData: User = {
-  _id: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+  id: "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
   name: "GreatStack",
   email: "admin@example.com",
-  imageUrl:
+  emailVerified: false,
+  image:
     "https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18ycnlnUnFiUDBYT2dEZ2h1ZmRXcGlpdWV5OXoiLCJyaWQiOiJ1c2VyXzJzWkZIUzFVSUl5c0p5RFZ6Q3BRaFVoVElodyJ9",
-  cartItems: {},
-  __v: 0,
+  role: "admin",
+  banned: false,
+  banReason: null,
+  banExpires: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 export const orderDummyData: any[] = [

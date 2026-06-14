@@ -23,6 +23,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     updateQuantity,
     loading,
   } = useCartStore();
+  if (!product?.id) {
+    return null;
+  }
+
   const quantity = cartItems[product.id] || 0;
 
   // Get the first image from the product's images array or use placeholder
@@ -32,25 +36,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       : "/placeholder-product.png";
 
   const displayPrice = product.offerPrice ?? product.price ?? 0;
-
-  // Show loading skeleton while cart is initializing
-  if (loading) {
-    return (
-      <div className="flex flex-col items-start gap-0.5 max-w-[200px] w-full cursor-pointer group animate-pulse">
-        {/* Image skeleton */}
-        <div className="relative bg-muted rounded-lg w-full h-52 flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-gray-700"></div>
-
-        {/* Name skeleton */}
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2"></div>
-
-        {/* Rating skeleton */}
-        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-1"></div>
-
-        {/* Price skeleton */}
-        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-1"></div>
-      </div>
-    );
-  }
 
   const handleAddToCart = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -156,32 +141,38 @@ export default function ProductCard({ product }: ProductCardProps) {
           {displayPrice.toLocaleString()}
         </p>
 
-        {quantity === 0 ? (
-          <button
-            onClick={handleAddToCart}
-            className="max-sm:hidden px-4 py-1.5 text-muted-foreground border border-border rounded-full text-xs hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
-          >
-            Add to cart
-          </button>
-        ) : (
-          <div className="max-sm:hidden flex items-center gap-1 border border-primary rounded-full overflow-hidden text-xs">
+        <div className="max-sm:hidden">
+          {loading ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+              Loading...
+            </div>
+          ) : quantity === 0 ? (
             <button
-              onClick={handleDecrease}
-              className="px-2.5 py-1.5 text-primary hover:bg-primary/10 transition font-bold"
+              onClick={handleAddToCart}
+              className="px-4 py-1.5 text-muted-foreground border border-border rounded-full text-xs hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
             >
-              −
+              Add to cart
             </button>
-            <span className="px-1 text-foreground font-medium min-w-[16px] text-center">
-              {quantity}
-            </span>
-            <button
-              onClick={handleIncrease}
-              className="px-2.5 py-1.5 text-primary hover:bg-primary/10 transition font-bold"
-            >
-              +
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center gap-1 border border-primary rounded-full overflow-hidden text-xs">
+              <button
+                onClick={handleDecrease}
+                className="px-2.5 py-1.5 text-primary hover:bg-primary/10 transition font-bold"
+              >
+                −
+              </button>
+              <span className="px-1 text-foreground font-medium min-w-[16px] text-center">
+                {quantity}
+              </span>
+              <button
+                onClick={handleIncrease}
+                className="px-2.5 py-1.5 text-primary hover:bg-primary/10 transition font-bold"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

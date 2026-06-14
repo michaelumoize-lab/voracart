@@ -1,9 +1,10 @@
 import React from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
+import Link from "next/link";
 import { FeaturedItem } from "@/types";
 import { StaticImageData } from "next/image";
-import { ArrowRight, Headphones, Music, Laptop, Link } from "lucide-react";
+import { ArrowRight, Headphones, Music, Laptop } from "lucide-react";
 
 const products: FeaturedItem[] = [
   {

@@ -147,18 +147,26 @@ export default function NotificationBell() {
   const handleNotificationClick = async (notification: AppNotification) => {
     // Mark as read when clicking
     if (!notification.read) {
+      const prevNotifications = notifications;
+      const prevCount = unreadCount;
       // Optimistic update
       setUnreadCount((prev) => Math.max(0, prev - 1));
       setNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)),
       );
 
-      // Background API call
-      fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: notification.id }),
-      }).catch(console.error);
+      try {
+        const res = await fetch("/api/notifications", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: notification.id }),
+        });
+        if (!res.ok) throw new Error("Failed to update notification status");
+      } catch (error) {
+        setUnreadCount(prevCount);
+        setNotifications(prevNotifications);
+        console.error("Failed to update notification status:", error);
+      }
     }
 
     setOpen(false);
@@ -199,11 +207,25 @@ export default function NotificationBell() {
             {notifications.some((n) => !n.read) && (
               <button
                 onClick={async () => {
+                  const prevNotifications = notifications;
+                  const prevCount = unreadCount;
                   setUnreadCount(0);
                   setNotifications((prev) =>
                     prev.map((n) => ({ ...n, read: true })),
                   );
-                  await fetch("/api/notifications", { method: "PATCH" });
+                  try {
+                    const res = await fetch("/api/notifications", {
+                      method: "PATCH",
+                    });
+                    if (!res.ok) throw new Error("Failed to mark all read");
+                  } catch (error) {
+                    setUnreadCount(prevCount);
+                    setNotifications(prevNotifications);
+                    console.error(
+                      "Failed to mark all notifications read:",
+                      error,
+                    );
+                  }
                 }}
                 className="text-xs text-primary hover:underline"
               >

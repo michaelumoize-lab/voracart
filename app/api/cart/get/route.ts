@@ -10,9 +10,6 @@ export async function GET(req: NextRequest) {
   try {
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: session.user.id },
-      include: {
-        product: true,
-      },
     });
 
     const cart: Record<string, number> = {};
@@ -23,5 +20,6 @@ export async function GET(req: NextRequest) {
     return apiSuccess({ cart });
   } catch (error) {
     console.error("Failed to fetch cart", error);
-    return apiError("Failed to fetch cart", 500);  }
+    return apiError("Failed to fetch cart", 500);
+  }
 }

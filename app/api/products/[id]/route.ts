@@ -7,7 +7,7 @@ import { getServerSession } from "@/lib/get-session";
 // GET - Get single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   // ✅ Await params before accessing its properties
   const { id } = await params;
@@ -16,16 +16,16 @@ export async function GET(
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        seller: {
+        store: {
           select: {
             id: true,
             name: true,
-            whatsappNumber: true, 
+            whatsappNumber: true,
           },
         },
       },
     });
-    
+
     if (!product) {
       return apiError("Product not found", 404);
     }
@@ -40,7 +40,7 @@ export async function GET(
 // PUT - Update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
@@ -58,21 +58,33 @@ export async function PUT(
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: { store: true },
     });
 
     if (!existingProduct) {
       return apiError("Product not found", 404);
     }
 
-    if (existingProduct.userId !== session.user.id && session.user.role !== "admin") {
+    if (
+      existingProduct.store?.userId !== session.user.id &&
+      session.user.role !== "admin"
+    ) {
       return apiError("You can only edit your own products", 403);
     }
 
     // Basic validation - consider using Zod for comprehensive schema validation
-    if (body.price !== undefined && (typeof body.price !== "number" || body.price < 0)) {
+    if (
+      body.price !== undefined &&
+      (typeof body.price !== "number" || body.price < 0)
+    ) {
       return apiError("Price must be a non-negative number", 400);
     }
-    if (body.stock !== undefined && (typeof body.stock !== "number" || body.stock < 0 || !Number.isInteger(body.stock))) {
+    if (
+      body.stock !== undefined &&
+      (typeof body.stock !== "number" ||
+        body.stock < 0 ||
+        !Number.isInteger(body.stock))
+    ) {
       return apiError("Stock must be a non-negative integer", 400);
     }
 
@@ -81,7 +93,9 @@ export async function PUT(
       data: {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.price !== undefined && { price: body.price }),
-        ...(body.description !== undefined && { description: body.description }),
+        ...(body.description !== undefined && {
+          description: body.description,
+        }),
         ...(body.category !== undefined && { category: body.category }),
         ...(body.offerPrice !== undefined && { offerPrice: body.offerPrice }),
         ...(body.stock !== undefined && { stock: body.stock }),
@@ -97,7 +111,7 @@ export async function PUT(
 // DELETE - Delete product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getServerSession();
   if (!session?.user) return apiError("Unauthorized", 401);
@@ -108,13 +122,17 @@ export async function DELETE(
   try {
     const existingProduct = await prisma.product.findUnique({
       where: { id },
+      include: { store: true },
     });
 
     if (!existingProduct) {
       return apiError("Product not found", 404);
     }
 
-    if (existingProduct.userId !== session.user.id && session.user.role !== "admin") {
+    if (
+      existingProduct.store?.userId !== session.user.id &&
+      session.user.role !== "admin"
+    ) {
       return apiError("You can only delete your own products", 403);
     }
 

@@ -7,8 +7,13 @@ import { useTheme } from "next-themes";
 export default function ModeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
 
-  const toggleTheme = () =>
+  const toggleTheme = () => {
+    if (!resolvedTheme) {
+      setTheme("light");
+      return;
+    }
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
 
   return (
     <button
