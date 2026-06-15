@@ -9,7 +9,6 @@ import { ZodError } from "zod";
 
 // GET - Fetch products
 export async function GET(request: NextRequest) {
-  console.log("API route hit: /api/products");
   const { searchParams } = new URL(request.url);
   const MAX_LIMIT = 100;
   const parsedLimit = parseInt(searchParams.get("limit") || "50", 10);
@@ -86,7 +85,7 @@ export async function GET(request: NextRequest) {
         },
         images: {
           orderBy: { position: "asc" },
-          take: 1, // Only get the primary image for performance
+          take: 1,
         },
       },
     });
@@ -102,9 +101,8 @@ export async function GET(request: NextRequest) {
           ? product.images[0].url
           : "/placeholder-product.png",
       images: product.images,
-      seller: product.store, // Map store to seller for frontend compatibility
+      seller: product.store,
     }));
-    console.log(`Found ${products.length} products`);
 
     return apiSuccess({ products: transformedProducts });
   } catch (error) {
@@ -131,6 +129,15 @@ export async function POST(request: NextRequest) {
     const store = await prisma.store.findUnique({
       where: { userId: session.user.id },
     });
+
+    // ✅ Check if store exists
+    if (!store) {
+      return apiError(
+        "You don't have a store associated with your account. Please create a store first.",
+        403,
+      );
+    }
+
     const slug = validated.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -145,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     const product = await prisma.product.create({
       data: {
-        storeId: store.id,
+        storeId: store.id, // ✅ store is guaranteed non-null here
         name: validated.name,
         slug,
         description: validated.description,
@@ -178,7 +185,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Transform products to match frontend expected format
+    // Transform product to match frontend expected format
     const transformedProduct = {
       ...product,
       price: Number(product.price),
@@ -195,13 +202,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Create product error:", error);
 
-    // Handle Zod validation errors
     if (error instanceof ZodError) {
       const message = error.issues.map((e) => e.message).join(", ");
       return apiError(message, 400);
     }
 
-    // Handle Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         return apiError("A product with this slug already exists", 400);
@@ -209,7 +214,6 @@ export async function POST(request: NextRequest) {
       return apiError("Database error occurred", 500);
     }
 
-    // Handle generic errors
     return apiError(
       error instanceof Error ? error.message : "Failed to create product",
       500,

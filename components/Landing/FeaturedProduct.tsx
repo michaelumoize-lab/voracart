@@ -61,7 +61,7 @@ export default function FeaturedProduct() {
               </p>
 
               <Link
-                href={`/product/${id}`}
+                href={`/products/${id}`}
                 className="flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded transition-colors"
               >
                 Buy now

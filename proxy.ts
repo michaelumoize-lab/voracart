@@ -1,47 +1,107 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/my-orders",
+  "/checkout",
+  "/wishlist",
+  "/profile",
+  "/my-addresses",
+  "/cart",
+] as const;
+
+const ADMIN_ROUTES = ["/admin"] as const;
+
+const AUTH_ROUTES = ["/auth/sign-in", "/auth/sign-up"] as const;
+
+function matchesRoute(pathname: string, routes: readonly string[]): boolean {
+  return routes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
 export async function proxy(request: NextRequest) {
-  const url = request.nextUrl;
-  const pathname = url.pathname;
+  const { nextUrl } = request;
+  const { pathname, search } = nextUrl;
 
-  // Intercept Better Auth's error endpoint
+  // Cache session so we only fetch it once per request
+  let sessionCache:
+    | Awaited<ReturnType<typeof auth.api.getSession>>
+    | null
+    | undefined;
+
+  const getSession = async () => {
+    if (sessionCache === undefined) {
+      sessionCache = await auth.api.getSession({
+        headers: request.headers,
+      });
+    }
+    return sessionCache;
+  };
+
+  // Handle Better Auth error endpoint
   if (pathname === "/api/auth/error") {
-    const error = url.searchParams.get("error");
-    const description = url.searchParams.get("error_description");
+    const redirectUrl = new URL("/auth/error", request.url);
 
-    const redirectUrl = new URL("/auth/error", url);
+    const error = nextUrl.searchParams.get("error");
+    const description = nextUrl.searchParams.get("error_description");
+
     if (error) {
       redirectUrl.searchParams.set("error", error);
     }
+
     if (description) {
       redirectUrl.searchParams.set("error_description", description);
     }
+
     return NextResponse.redirect(redirectUrl);
   }
-  // Admin routes - require admin role
-  if (pathname.startsWith("/admin")) {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    const userRole = (session?.user as unknown as { role?: string })?.role;
+
+  // Redirect authenticated users away from auth pages
+  if (matchesRoute(pathname, AUTH_ROUTES)) {
+    const session = await getSession();
+
+    if (session) {
+      const redirectTo = nextUrl.searchParams.get("redirect") || "/";
+
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
+
+    return NextResponse.next();
+  }
+
+  // Admin routes
+  if (matchesRoute(pathname, ADMIN_ROUTES)) {
+    const session = await getSession();
 
     if (!session) {
-      return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+      const redirectUrl = new URL("/auth/sign-in", request.url);
+
+      redirectUrl.searchParams.set("redirect", pathname + search);
+
+      return NextResponse.redirect(redirectUrl);
     }
+
+    const userRole = session.user.role;
 
     if (userRole !== "admin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
+
+    return NextResponse.next();
   }
 
-  // Dashboard routes - require authentication
-  if (pathname.startsWith("/dashboard")) {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+  // Protected routes
+  if (matchesRoute(pathname, PROTECTED_ROUTES)) {
+    const session = await getSession();
+
     if (!session) {
-      return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+      const redirectUrl = new URL("/auth/sign-in", request.url);
+
+      redirectUrl.searchParams.set("redirect", pathname + search);
+
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
@@ -51,9 +111,18 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+
     "/dashboard/:path*",
-    "/api/auth/:path*",
-    "/auth/:path*",
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/my-orders/:path*",
+    "/checkout/:path*",
+    "/wishlist/:path*",
+    "/profile/:path*",
+    "/my-addresses/:path*",
+    "/cart",
+
+    "/auth/sign-in",
+    "/auth/sign-up",
+
+    "/api/auth/error",
   ],
 };

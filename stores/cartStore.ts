@@ -22,6 +22,19 @@ interface CartStore {
 const getCartCount = (items: CartItems): number =>
   Object.values(items).reduce((sum, qty) => sum + qty, 0);
 
+// Helper to show login prompt toast
+const showLoginToast = () => {
+  toast.error("Please log in to manage your cart", {
+    action: {
+      label: "Login",
+      onClick: () => {
+        window.location.href = "/auth/sign-in";
+      },
+    },
+    duration: 5000,
+  });
+};
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -32,10 +45,13 @@ export const useCartStore = create<CartStore>()(
 
       setHydrated: (state) => set({ isHydrated: state }),
 
+      // GET /api/cart - fetch cart
       fetchCart: async () => {
         set({ loading: true });
         try {
-          const response = await fetch("/api/cart/get");
+          const response = await fetch("/api/cart", {
+            credentials: "include",
+          });
 
           if (response.status === 401) {
             set({ items: {}, cartCount: 0, loading: false });
@@ -61,6 +77,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // POST /api/cart - add or update item
       addToCart: async (productId: string) => {
         if (!productId) {
           toast.error("Invalid product");
@@ -71,6 +88,7 @@ export const useCartStore = create<CartStore>()(
         const currentQty = currentItems[productId] || 0;
         const newQty = currentQty + 1;
 
+        // Optimistic update
         const newItems = { ...currentItems, [productId]: newQty };
         set({
           items: newItems,
@@ -78,11 +96,25 @@ export const useCartStore = create<CartStore>()(
         });
 
         try {
-          const response = await fetch("/api/cart/update", {
+          const response = await fetch("/api/cart", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ productId, quantity: newQty }),
           });
+
+          if (response.status === 401) {
+            // Revert optimistic update
+            const revertedItems = { ...currentItems };
+            if (currentQty === 0) delete revertedItems[productId];
+            else revertedItems[productId] = currentQty;
+            set({
+              items: revertedItems,
+              cartCount: getCartCount(revertedItems),
+            });
+            showLoginToast();
+            return;
+          }
 
           if (!response.ok) throw new Error("Failed to update cart");
           toast.success("Added to cart!");
@@ -102,6 +134,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // PUT /api/cart/[id] - update specific item quantity
       updateQuantity: async (productId: string, quantity: number) => {
         if (!productId) {
           toast.error("Invalid product");
@@ -111,6 +144,7 @@ export const useCartStore = create<CartStore>()(
         const currentItems = get().items;
         const prevQty = currentItems[productId] || 0;
 
+        // Optimistic update
         const newItems = { ...currentItems };
         if (quantity <= 0) delete newItems[productId];
         else newItems[productId] = quantity;
@@ -121,11 +155,25 @@ export const useCartStore = create<CartStore>()(
         });
 
         try {
-          const response = await fetch("/api/cart/update", {
-            method: "POST",
+          const response = await fetch(`/api/cart/${productId}`, {
+            method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId, quantity }),
+            credentials: "include",
+            body: JSON.stringify({ quantity }),
           });
+
+          if (response.status === 401) {
+            // Revert optimistic update
+            const revertedItems = { ...currentItems };
+            if (prevQty === 0) delete revertedItems[productId];
+            else revertedItems[productId] = prevQty;
+            set({
+              items: revertedItems,
+              cartCount: getCartCount(revertedItems),
+            });
+            showLoginToast();
+            return;
+          }
 
           if (!response.ok) throw new Error("Failed to update cart");
 
@@ -135,7 +183,7 @@ export const useCartStore = create<CartStore>()(
           else if (quantity > prevQty)
             toast.success(`Quantity increased to ${quantity}`);
         } catch (error) {
-          // Revert
+          // Revert optimistic update
           const revertedItems = { ...currentItems };
           if (prevQty === 0) delete revertedItems[productId];
           else revertedItems[productId] = prevQty;
@@ -150,16 +198,28 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // DELETE /api/cart/[id] - remove item (reuses updateQuantity with 0)
       removeItem: async (productId: string) => {
         await get().updateQuantity(productId, 0);
       },
 
+      // DELETE /api/cart - clear entire cart
       clearCart: async () => {
         const prevItems = get().items;
         set({ items: {}, cartCount: 0 });
 
         try {
-          const response = await fetch("/api/cart/clear", { method: "POST" });
+          const response = await fetch("/api/cart", {
+            method: "DELETE",
+            credentials: "include",
+          });
+
+          if (response.status === 401) {
+            set({ items: prevItems, cartCount: getCartCount(prevItems) });
+            showLoginToast();
+            return;
+          }
+
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Failed to clear cart: ${errorText}`);

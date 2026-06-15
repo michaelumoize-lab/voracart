@@ -58,7 +58,6 @@ export const checkRateLimit = (
       rateLimitMap.delete(key);
     }
   }
-  const now = Date.now();
   const record = rateLimitMap.get(ip);
 
   if (!record) {

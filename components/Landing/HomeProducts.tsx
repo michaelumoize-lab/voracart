@@ -1,43 +1,36 @@
-"use client";
-
-import { ProductGridSkeleton } from "@/components/Products/ProductsSkeletons";
+// components/Landing/HomeProducts.tsx (Server Component)
 import Link from "next/link";
 import { ArrowRight, Flame } from "lucide-react";
 import ProductCard from "@/components/Products/ProductCard";
-import { useProducts } from "@/hooks/useProducts";
+import { prisma } from "@/lib/prisma";
+import { serializeProductList } from "@/lib/serialize";
 
-export default function HomeProducts() {
-  const { products, loading, error } = useProducts({ limit: 10 }); // Updated to pass options object
+interface HomeProductsProps {
+  limit?: number;
+}
 
-  if (loading) {
-    return (
-      <section className="relative py-16">
-        <ProductGridSkeleton count={10} />
-      </section>
-    );
-  }
+export default async function HomeProducts({ limit = 10 }: HomeProductsProps) {
+  // Fetch products directly on the server (no API call needed)
+  const products = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      stock: { gt: 0 },
+    },
+    take: limit,
+    orderBy: { rating: "desc" }, // Popular products by rating
+    include: {
+      images: {
+        take: 1,
+        orderBy: { position: "asc" },
+      },
+      store: true,
+    },
+  });
 
-  if (error) {
-    return (
-      <section className="relative py-16">
-        <div className="text-center text-red-500">
-          <p>Failed to load products</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-2 text-sm underline"
-          >
-            Try again
-          </button>
-        </div>
-      </section>
-    );
-  }
+  // Use the centralized serializer
+  const serializedProducts = serializeProductList(products);
 
-  // Filter products that are active and have stock
-  const activeProducts = products.filter(
-    (product) => product.isActive !== false && product.stock > 0,
-  );
-  const displayProducts = activeProducts.slice(0, 10);
+  const hasProducts = serializedProducts.length > 0;
 
   return (
     <section className="relative py-16">
@@ -55,7 +48,7 @@ export default function HomeProducts() {
           </h2>
         </div>
 
-        {displayProducts.length > 0 && (
+        {hasProducts && (
           <Link
             href="/products"
             className="group hidden md:inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
@@ -73,7 +66,7 @@ export default function HomeProducts() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-        {displayProducts.length === 0 ? (
+        {!hasProducts ? (
           <div className="col-span-full flex flex-col items-center justify-center py-20 gap-3">
             <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
               <Flame className="h-7 w-7 text-muted-foreground" />
@@ -82,13 +75,13 @@ export default function HomeProducts() {
             <p className="text-sm text-muted-foreground/60">Check back soon</p>
           </div>
         ) : (
-          displayProducts.map((product) => (
+          serializedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
       </div>
 
-      {displayProducts.length > 0 && (
+      {hasProducts && (
         <>
           <div className="mt-10 flex justify-center md:hidden">
             <Link
@@ -109,7 +102,7 @@ export default function HomeProducts() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <p className="text-xs text-muted-foreground">
-              Showing {displayProducts.length} trending products
+              Showing {serializedProducts.length} trending products
             </p>
           </div>
         </>

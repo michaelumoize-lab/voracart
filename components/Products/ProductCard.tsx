@@ -1,28 +1,31 @@
+// components/Products/ProductCard.tsx
 "use client";
+
 import React from "react";
 import Image from "next/image";
 import { useCartStore } from "@/stores/cartStore";
-import { Product } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
-import { ProductRating } from "@/components/ui/product-rating"; // Import the new component
+import { ProductRating } from "@/components/ui/product-rating";
+import type { SerializedProduct } from "@/lib/serialize";
 
 interface ProductCardProps {
-  product: Product;
+  product: SerializedProduct;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const currency = "₦";
 
-  // Use the new cart store with loading state
+  // Use the cart store
   const {
     items: cartItems,
     addToCart,
     updateQuantity,
     loading,
   } = useCartStore();
+
   if (!product?.id) {
     return null;
   }
@@ -85,7 +88,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const handleCardClick = () => {
-    router.push(`/product/${product.id}`);
+    router.push(`/products/${product.id}`);
     window.scrollTo(0, 0);
   };
 
@@ -102,6 +105,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="group-hover:scale-105 transition-transform duration-300 object-cover w-4/5 h-4/5 md:w-full md:h-full"
           width={800}
           height={800}
+          priority={false}
         />
 
         {/* Wishlist Button */}
@@ -121,7 +125,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {product.name}
       </h3>
 
-      {/* Rating - Using the new ProductRating component */}
+      {/* Rating */}
       <div className="flex items-center gap-2">
         <ProductRating
           rating={product.rating || 0}

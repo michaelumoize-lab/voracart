@@ -82,9 +82,42 @@ export interface Product {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  store?: Store;
+  store?: {
+    id: string;
+    name: string;
+    slug: string;
+    rating?: number;
+    logo?: string | null;
+    totalSales?: number;
+  };
   images?: ProductImage[];
   reviews?: Review[];
+}
+
+export interface ProductListItem {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  offerPrice: number | null;
+  stock: number;
+  category: string;
+  rating: number;
+  reviewCount: number;
+  tags: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  image: string; // primary image URL
+  images: ProductImage[];
+  seller?: {
+    id: string;
+    name: string;
+    slug: string;
+    rating?: number;
+  };
+  storeId: string;
+  description?: string | null;
 }
 
 export interface ProductImage {
@@ -131,7 +164,6 @@ export interface WishlistItem {
   user?: User;
 }
 
-// Cart items as record (for legacy support)
 export interface CartItems {
   [productId: string]: number;
 }
@@ -153,43 +185,7 @@ export interface ShippingAddress {
   orders?: Order[];
 }
 
-// Order types - use the imported OrderStatus type
-export interface Order {
-  id: string;
-  userId: string;
-  shippingAddressId: string;
-  couponId: string | null;
-  status: PrismaOrderStatus; // Use the imported type directly
-  subtotal: number;
-  shippingFee: number;
-  discountAmount: number;
-  totalAmount: number;
-  paymentMethod: string | null;
-  paymentReference: string | null;
-  paidAt: string | null;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-  user?: User;
-  shippingAddress?: ShippingAddress;
-  coupon?: Coupon | null;
-  items?: OrderItem[];
-}
-
-export interface OrderItem {
-  id: string;
-  orderId: string;
-  productId: string;
-  storeId: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-  status: ItemStatus;
-  createdAt: string;
-  updatedAt: string;
-  order?: Order;
-  product?: Product;
-}
+export type Address = ShippingAddress;
 
 // Coupon types
 export interface Coupon {
@@ -209,11 +205,59 @@ export interface Coupon {
   orders?: Order[];
 }
 
+// Order types - updated with new fields
+export interface Order {
+  id: string;
+  userId: string;
+  shippingAddressId: string;
+  couponId: string | null;
+  status: PrismaOrderStatus;
+  subtotal: number;
+  shippingFee: number;
+  discountAmount: number;
+  totalAmount: number;
+  paymentMethod: string | null;
+  paymentReference: string | null;
+  paidAt: string | null;
+  notes: string | null;
+  invoiceUrl: string | null;
+  emailSent: boolean;
+  notificationSent: boolean;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: User;
+  shippingAddress?: {
+    fullName: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  coupon?: Coupon | null;
+  items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  storeId: string;
+  quantity: number;
+  unitPrice: number; // ← Keep as unitPrice (not price)
+  total: number; // ← Add total
+  status: ItemStatus;
+  createdAt: string;
+  updatedAt: string;
+  order?: Order;
+  product?: Product;
+}
+
 // Notification types
 export interface Notification {
   id: string;
   userId: string;
-  type: PrismaNotificationType; // Use the imported type directly
+  type: PrismaNotificationType;
   message: string;
   read: boolean;
   link: string | null;
@@ -221,7 +265,9 @@ export interface Notification {
   user?: User;
 }
 
-// System Settings
+export type AppNotification = Notification;
+
+// System Settings - updated with new fields
 export interface SystemSettings {
   id: number;
   siteName: string;
@@ -341,4 +387,60 @@ export interface ProductFilters {
   search?: string;
   page?: number;
   limit?: number;
+}
+
+// Invoice types
+export interface InvoiceData {
+  orderId: string;
+  orderNumber: string;
+  date: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  shippingAddress: ShippingAddress;
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  discountAmount: number;
+  totalAmount: number;
+  paymentMethod?: string;
+  paymentReference?: string;
+  status: PrismaOrderStatus;
+}
+
+// Webhook payload types
+export interface OrderWebhookPayload {
+  event: "order.created" | "order.updated" | "order.cancelled";
+  orderId: string;
+  userId: string;
+  timestamp: string;
+  data?: Partial<Order>;
+}
+
+// Analytics types
+export interface OrderAnalytics {
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  ordersByStatus: Record<PrismaOrderStatus, number>;
+  topProducts: Array<{ productId: string; name: string; quantity: number }>;
+  salesByCategory: Array<{ category: string; total: number }>;
+}
+
+// Email template types
+export interface OrderEmailData {
+  orderId: string;
+  customerName: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    total: number;
+  }>;
+  subtotal: number;
+  shippingFee: number;
+  totalAmount: number;
+  shippingAddress: ShippingAddress;
+  invoiceUrl?: string;
+  orderDate: string;
 }

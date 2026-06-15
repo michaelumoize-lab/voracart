@@ -17,6 +17,7 @@ export const createProductSchema = z.object({
   image: z
     .array(z.string().url("Invalid image URL"))
     .min(1, "At least one image is required"),
+  isActive: z.boolean().optional(),
 });
 
 export const updateProductSchema = createProductSchema.partial().extend({

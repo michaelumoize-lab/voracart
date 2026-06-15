@@ -17,3 +17,4 @@ export const authClient = createAuthClient({
 export type AuthClient = typeof authClient;
 
 export const { signIn, signUp, signOut, useSession } = authClient;
+export type SessionData = Awaited<ReturnType<typeof useSession>>["data"];
