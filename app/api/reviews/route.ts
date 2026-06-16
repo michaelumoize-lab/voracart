@@ -16,10 +16,17 @@ export async function POST(request: NextRequest) {
       return apiError("productId, rating, title, and body are required", 400);
     }
 
+    if (typeof title !== "string" || !title.trim()) {
+      return apiError("Title cannot be empty", 400);
+    }
+
+    if (typeof reviewBody !== "string" || !reviewBody.trim()) {
+      return apiError("Review body cannot be empty", 400);
+    }
+
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
       return apiError("Rating must be a number between 1 and 5", 400);
     }
-
     // Check if product exists and is active
     const product = await prisma.product.findFirst({
       where: {

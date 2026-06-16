@@ -95,8 +95,14 @@ export async function PUT(
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-    }
 
+      if (!slug) {
+        return apiError(
+          "Product name must contain at least one alphanumeric character",
+          400,
+        );
+      }
+    }
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
@@ -104,12 +110,13 @@ export async function PUT(
         slug,
         description: validated.description,
         price: validated.price,
-        offerPrice: validated.offerPrice ?? null,
+        ...(validated.offerPrice !== undefined && {
+          offerPrice: validated.offerPrice ?? null,
+        }),
         stock: validated.stock,
         category: validated.category,
         tags: validated.tags,
-        isActive: validated.isActive,
-        // Handle image updates only when a new image array is provided
+        isActive: validated.isActive, // Handle image updates only when a new image array is provided
         ...(Array.isArray(validated.image) &&
           validated.image.length > 0 && {
             images: {

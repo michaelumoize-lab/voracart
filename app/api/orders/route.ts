@@ -1,5 +1,6 @@
 // app/api/orders/route.ts
 import { NextRequest } from "next/server";
+import { ItemStatus } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/get-session";
@@ -8,16 +9,13 @@ import { apiSuccess, apiError, validateBody } from "@/lib/api-helper";
 const orderItemSchema = z.object({
   productId: z.string().min(1),
   quantity: z.number().int().positive(),
-  unitPrice: z.number().positive(),
   storeId: z.string().min(1),
 });
 
 const createOrderSchema = z.object({
   items: z.array(orderItemSchema),
-  subtotal: z.number().nonnegative(),
   shippingFee: z.number().nonnegative(),
   discountAmount: z.number().nonnegative().default(0),
-  totalAmount: z.number().nonnegative(),
   shippingAddressId: z.string().min(1),
   paymentMethod: z.string().optional(),
   notes: z.string().nullable().optional(),
@@ -34,10 +32,8 @@ export async function POST(request: NextRequest) {
 
   const {
     items,
-    subtotal,
     shippingFee,
     discountAmount,
-    totalAmount,
     shippingAddressId,
     paymentMethod,
     notes,
@@ -58,9 +54,10 @@ export async function POST(request: NextRequest) {
 
     // Verify all products exist and are active
     const productIds = items.map((item) => item.productId);
+    const uniqueProductIds = [...new Set(productIds)];
     const products = await prisma.product.findMany({
       where: {
-        id: { in: productIds },
+        id: { in: uniqueProductIds },
         isActive: true,
       },
       select: {
@@ -71,20 +68,47 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (products.length !== items.length) {
+    if (products.length !== uniqueProductIds.length) {
       return apiError("One or more products are invalid or inactive", 400);
     }
-
-    // Check stock availability
+    // Aggregate quantities by product and check stock
+    const productQuantities = new Map<string, number>();
     for (const item of items) {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product || product.stock < item.quantity) {
-        return apiError(
-          `Insufficient stock for product ${item.productId}`,
-          400,
-        );
+      const current = productQuantities.get(item.productId) || 0;
+      productQuantities.set(item.productId, current + item.quantity);
+    }
+
+    for (const [productId, totalQty] of productQuantities) {
+      const product = products.find((p) => p.id === productId);
+      if (!product || product.stock < totalQty) {
+        return apiError(`Insufficient stock for product ${productId}`, 400);
       }
     }
+
+    // Build order pricing from trusted product data
+    const orderItems = items.map((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) {
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+
+      const unitPrice = Number(product.price);
+      const total = unitPrice * item.quantity;
+
+      return {
+        quantity: item.quantity,
+        unitPrice,
+        total,
+        storeId: item.storeId,
+        status: ItemStatus.PENDING,
+        product: {
+          connect: { id: item.productId },
+        },
+      };
+    });
+
+    const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
+    const totalAmount = subtotal + Number(shippingFee) - Number(discountAmount);
 
     // Create order and order items in a transaction
     const order = await prisma.$transaction(async (tx) => {
@@ -101,14 +125,7 @@ export async function POST(request: NextRequest) {
           paymentMethod: paymentMethod || null,
           notes: notes || null,
           items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              total: item.unitPrice * item.quantity,
-              storeId: item.storeId,
-              status: "PENDING",
-            })),
+            create: orderItems,
           },
         },
         include: {

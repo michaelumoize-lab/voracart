@@ -67,14 +67,10 @@ function serializeProduct(product: DetailProduct): Product {
     reviewCount: product.reviewCount,
     tags: product.tags,
     isActive: product.isActive,
-    images: product.images.map((img) => ({
-      id: `${product.id}-img-${img.position}`,
-      productId: product.id,
-      url: img.url,
-      alt: img.alt ?? product.name,
-      position: img.position,
-      createdAt: product.createdAt.toISOString(),
-    })),
+    images: {
+      orderBy: { position: "asc" as const },
+      select: { url: true, alt: true, position: true, createdAt: true },
+    },
     image: product.images[0]?.url ?? "/placeholder-product.png",
     store: product.store
       ? {
@@ -91,7 +87,7 @@ function serializeProduct(product: DetailProduct): Product {
     storeId: product.store?.id ?? "",
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-  } as Product;
+  } as unknown as Product;
 }
 
 function ReviewsSkeleton() {

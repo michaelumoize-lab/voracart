@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import ProductCard from "@/components/Products/ProductCard";
 import FiltersSidebar from "@/app/(public)/products/FiltersSidebar";
@@ -93,52 +93,45 @@ export default function AllProductsClient({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    setSearch(initialSearch);
-    setCategory(initialCategory);
-    setSortBy(initialSort);
-    setCurrentPage(initialPage);
-    setMinPrice(initialMinPrice?.toString() ?? "");
-    setMaxPrice(initialMaxPrice?.toString() ?? "");
-    setMinRating(initialMinRating);
-    setInStockOnly(initialInStockOnly);
-  }, [
-    initialSearch,
-    initialCategory,
-    initialSort,
-    initialPage,
-    initialMinPrice,
-    initialMaxPrice,
-    initialMinRating,
-    initialInStockOnly,
-  ]);
+  const updateFilters = useCallback(
+    (updates: FilterUpdates) => {
+      const next = {
+        category: updates.category ?? category,
+        search: updates.search ?? search,
+        sort: updates.sort ?? sortBy,
+        page: updates.page ?? 1,
+        minPrice: updates.minPrice ?? minPrice,
+        maxPrice: updates.maxPrice ?? maxPrice,
+        minRating: updates.minRating ?? minRating,
+        inStock: updates.inStock ?? inStockOnly,
+      };
 
-  const updateFilters = (updates: FilterUpdates) => {
-    const next = {
-      category: updates.category ?? category,
-      search: updates.search ?? search,
-      sort: updates.sort ?? sortBy,
-      page: updates.page ?? 1,
-      minPrice: updates.minPrice ?? minPrice,
-      maxPrice: updates.maxPrice ?? maxPrice,
-      minRating: updates.minRating ?? minRating,
-      inStock: updates.inStock ?? inStockOnly,
-    };
+      const params = new URLSearchParams();
+      if (next.category && next.category !== "all")
+        params.set("category", next.category);
+      if (next.search) params.set("search", next.search);
+      if (next.sort && next.sort !== "newest") params.set("sort", next.sort);
+      if (next.page > 1) params.set("page", String(next.page));
+      if (next.minPrice) params.set("minPrice", next.minPrice);
+      if (next.maxPrice) params.set("maxPrice", next.maxPrice);
+      if (next.minRating > 0) params.set("minRating", String(next.minRating));
+      if (next.inStock) params.set("inStock", "true");
 
-    const params = new URLSearchParams();
-    if (next.category && next.category !== "all")
-      params.set("category", next.category);
-    if (next.search) params.set("search", next.search);
-    if (next.sort && next.sort !== "newest") params.set("sort", next.sort);
-    if (next.page > 1) params.set("page", String(next.page));
-    if (next.minPrice) params.set("minPrice", next.minPrice);
-    if (next.maxPrice) params.set("maxPrice", next.maxPrice);
-    if (next.minRating > 0) params.set("minRating", String(next.minRating));
-    if (next.inStock) params.set("inStock", "true");
-
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  };
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [
+      category,
+      search,
+      sortBy,
+      minPrice,
+      maxPrice,
+      minRating,
+      inStockOnly,
+      pathname,
+      router,
+    ],
+  );
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,15 +140,21 @@ export default function AllProductsClient({
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+  };
+
+  useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-
     searchTimeoutRef.current = setTimeout(() => {
-      updateFilters({ search: value, page: 1 });
+      updateFilters({ search, page: 1 });
     }, 300);
-  };
-
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [search, updateFilters]);
   const handleCategoryChange = (value: string) => {
     setCategory(value);
     updateFilters({ category: value, page: 1 });

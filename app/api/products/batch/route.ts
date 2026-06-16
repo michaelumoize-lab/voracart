@@ -95,9 +95,8 @@ export async function GET(req: NextRequest) {
             rating: Number(product.store.rating),
           }
         : undefined,
-      storeId: product.store?.id ?? "",
+      storeId: product.store?.id ?? null,
     }));
-
     return apiSuccess({ products: serialized });
   } catch (error) {
     console.error("Batch products API error:", error);

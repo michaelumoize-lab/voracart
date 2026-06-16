@@ -28,7 +28,7 @@ const relatedSelect = {
   images: {
     orderBy: { position: "asc" as const },
     take: 1,
-    select: { url: true, alt: true, position: true },
+    select: { url: true, alt: true, position: true, createdAt: true },
   },
   store: {
     select: { id: true, name: true, slug: true, rating: true },
@@ -61,7 +61,7 @@ function serializeProduct(product: RelatedProduct): ProductListItem {
       url: img.url,
       alt: img.alt,
       position: img.position,
-      createdAt: product.createdAt.toISOString(),
+      createdAt: img.createdAt.toISOString(),
     })),
     seller: product.store
       ? {

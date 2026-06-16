@@ -340,24 +340,7 @@ export interface LocalProduct {
   imgSrc: string;
 }
 
-export type ProductCategory =
-  | "Earphone"
-  | "Headphone"
-  | "Watch"
-  | "Smartphone"
-  | "Laptop"
-  | "Camera"
-  | "Accessories"
-  | "Electronics"
-  | "Computers"
-  | "Audio"
-  | "Wearables"
-  | "Clothing"
-  | "Footwear"
-  | "Furniture"
-  | "Lighting"
-  | "Kitchen"
-  | "Decor";
+export type { ProductCategory } from "@/lib/constants";
 
 // Helper type for API responses
 export interface ApiResponse<T = any> {

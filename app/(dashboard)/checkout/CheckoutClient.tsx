@@ -205,13 +205,21 @@ export default function CheckoutClient({
     try {
       await withLoading(async () => {
         // Build order payload matching your schema
-        const orderItems = products.map((p) => ({
-          productId: p.id,
-          quantity: p.quantity,
-          unitPrice: p.offerPrice ?? p.price,
-          storeId: p.storeId,
-        }));
+        const orderItems = products
+          .map((p) => ({
+            productId: p.id,
+            quantity: p.quantity,
+            unitPrice: p.offerPrice ?? p.price,
+            storeId: p.storeId,
+          }))
+          .filter((item) => item.storeId); // Remove items without valid storeId
 
+        if (orderItems.length === 0) {
+          toast.error(
+            "Unable to process order: products missing store information",
+          );
+          return;
+        }
         const response = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -47,10 +47,13 @@ export async function PUT(
   }
 
   const { quantity } = body;
-  if (typeof quantity !== "number" || quantity < 0) {
-    return apiError("Quantity must be a non‑negative integer", 400);
+  if (
+    typeof quantity !== "number" ||
+    quantity < 0 ||
+    !Number.isInteger(quantity)
+  ) {
+    return apiError("Quantity must be a non-negative integer", 400);
   }
-
   // Check product exists and stock
   const product = await prisma.product.findUnique({
     where: { id: productId },

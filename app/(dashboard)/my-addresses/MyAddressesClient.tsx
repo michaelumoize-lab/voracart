@@ -32,7 +32,8 @@ export default function MyAddressesClient({
   initialAddresses,
 }: MyAddressesClientProps) {
   const router = useRouter();
-  const [addresses, setAddresses] = useState<SerializedAddress[]>(initialAddresses);
+  const [addresses, setAddresses] =
+    useState<SerializedAddress[]>(initialAddresses);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -112,6 +113,7 @@ export default function MyAddressesClient({
       }
       setAddresses(updated);
       toast.success("Address deleted");
+      router.refresh();
     } catch {
       toast.error("Failed to delete address");
     } finally {
@@ -233,7 +235,11 @@ export default function MyAddressesClient({
               disabled={saving}
               className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Save"}
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+              ) : (
+                "Save"
+              )}
             </button>
             <button
               type="button"
@@ -272,7 +278,9 @@ export default function MyAddressesClient({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">{addr.phone}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {addr.phone}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {[addr.address, addr.city, addr.state, addr.pincode]
                         .filter(Boolean)

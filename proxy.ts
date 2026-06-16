@@ -63,14 +63,18 @@ export async function proxy(request: NextRequest) {
     const session = await getSession();
 
     if (session) {
-      const redirectTo = nextUrl.searchParams.get("redirect") || "/";
+      const redirectParam = nextUrl.searchParams.get("redirect") || "/";
+      // Only allow relative paths, reject external URLs
+      const redirectTo =
+        redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+          ? redirectParam
+          : "/";
 
       return NextResponse.redirect(new URL(redirectTo, request.url));
     }
 
     return NextResponse.next();
   }
-
   // Admin routes
   if (matchesRoute(pathname, ADMIN_ROUTES)) {
     const session = await getSession();
