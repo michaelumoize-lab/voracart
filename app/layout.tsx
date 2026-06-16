@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import { Header } from "@/components/header";
+import { CartInitializer } from "@/components/Cart/CartInitializer";
 
 const merriweatherHeading = Merriweather({
   subsets: ["latin"],
@@ -50,9 +50,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
-            <Toaster />
-            <Header />
             {children}
+            <CartInitializer />
+            <Toaster />
           </Providers>
         </ThemeProvider>
       </body>

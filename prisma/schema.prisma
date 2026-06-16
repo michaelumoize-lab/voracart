@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,38 +6,98 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  buyer
+  seller
+  admin
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ItemStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+enum NotificationType {
+  NEW_ORDER
+  ORDER_STATUS_UPDATED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  NEW_APPLICATION
+  NEW_PRODUCT
+  NEW_REVIEW
+  LOW_STOCK
+}
+
+// ─── Auth (Better Auth compatible) ────────────────────────────────────────────
+
 model User {
-  id            String    @id
-  name          String
-  email         String
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          String?
-  banned        Boolean?  @default(false)
+  role          Role      @default(buyer)
+  banned        Boolean   @default(false)
   banReason     String?
   banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  @@unique([email])
+  sessions          Session[]
+  accounts          Account[]
+  notifications     Notification[]
+  shippingAddresses ShippingAddress[]
+  orders            Order[]
+  cartItems         CartItem[]
+  wishlistItems     WishlistItem[]
+  reviews           Review[]
+  sellerApplication SellerApplication?
+  store             Store?
+
   @@map("user")
 }
 
 model Session {
   id             String   @id
   expiresAt      DateTime
-  token          String
+  token          String   @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   ipAddress      String?
   userAgent      String?
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy String?
 
-  @@unique([token])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@map("session")
 }
@@ -48,7 +107,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -59,6 +117,9 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
   @@index([userId])
   @@map("account")
 }
@@ -73,4 +134,293 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ─── Seller ───────────────────────────────────────────────────────────────────
+
+model SellerApplication {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  storeName   String
+  phone       String
+  description String?
+  status      ApplicationStatus @default(PENDING)
+  adminNotes  String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("seller_applications")
+}
+
+// Store is created when a SellerApplication is approved.
+// Separating it from User keeps seller-specific data clean.
+model Store {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  banner      String?
+  phone       String?
+  rating      Decimal  @default(0) @db.Decimal(3, 2)
+  totalSales  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("stores")
+}
+
+// ─── Catalog ──────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  slug        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  offerPrice  Decimal? @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  // Denormalized average — recomputed after each review upsert.
+  // Source of truth is the Review table.
+  rating      Decimal  @default(0) @db.Decimal(3, 2)
+  reviewCount Int      @default(0)
+  category    String
+  tags        String[] // postgres array; simple and queryable
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  store         Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  images        ProductImage[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+  wishlistItems WishlistItem[]
+
+  @@index([storeId])
+  @@index([category])
+  @@index([slug])
+  @@map("products")
+}
+
+// Multiple images per product with explicit ordering.
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  position  Int      @default(0) // 0 = primary/cover image
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  orderId   String? // optional link — ensures verified purchase
+  rating    Int // 1-5; enforce in app layer
+  title     String?
+  body      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId]) // one review per product per user
+  @@index([productId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
+}
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id              String     @id @default(cuid())
+  code            String     @unique
+  type            CouponType
+  // For PERCENTAGE: 0–100. For FIXED_AMOUNT: naira value. For FREE_SHIPPING: 0.
+  value           Decimal    @db.Decimal(10, 2)
+  minOrderAmount  Decimal?   @db.Decimal(10, 2)
+  maxDiscount     Decimal?   @db.Decimal(10, 2) // cap for percentage coupons
+  usageLimit      Int? // null = unlimited
+  usageCount      Int        @default(0)
+  perUserLimit    Int        @default(1)
+  isActive        Boolean    @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model ShippingAddress {
+  id        String   @id @default(cuid())
+  userId    String
+  fullName  String
+  phone     String
+  address   String
+  city      String
+  state     String
+  pincode   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@map("shipping_addresses")
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  userId            String
+  shippingAddressId String
+  couponId          String?
+  status            OrderStatus @default(PENDING)
+  // Snapshot of financials at time of order — never recomputed from items.
+  subtotal          Decimal     @db.Decimal(10, 2)
+  shippingFee       Decimal     @default(0) @db.Decimal(10, 2)
+  discountAmount    Decimal     @default(0) @db.Decimal(10, 2)
+  totalAmount       Decimal     @db.Decimal(10, 2)
+  // Lightweight payment tracking — extend to a separate Payment model if needed.
+  paymentMethod     String?
+  paymentReference  String?
+  paidAt            DateTime?
+  notes             String?
+
+  invoiceUrl      String?   // URL to generated PDF invoice
+  emailSent       Boolean   @default(false)
+  notificationSent Boolean  @default(false)
+  
+  metadata        Json?     // Store additional data
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingAddress ShippingAddress @relation(fields: [shippingAddressId], references: [id])
+  coupon          Coupon?         @relation(fields: [couponId], references: [id])
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String     @id @default(cuid())
+  orderId   String
+  productId String
+  storeId   String // denormalized — lets sellers query their items directly
+  // Price snapshot at the time of purchase. Never link back to Product.price.
+  quantity  Int
+  unitPrice Decimal    @db.Decimal(10, 2)
+  total     Decimal    @db.Decimal(10, 2) // quantity × unitPrice
+  status    ItemStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@index([orderId])
+  @@index([productId])
+  @@index([storeId])
+  @@map("order_items")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// ─── System ───────────────────────────────────────────────────────────────────
+
+// Singleton row enforced by id = 1. Insert once on first deploy.
+model SystemSettings {
+  id                    Int      @id @default(1) // always 1 — one row only
+  siteName              String   @default("VoraCart")
+  siteDescription       String?
+  contactEmail          String
+  contactPhone          String?
+  maintenanceMode       Boolean  @default(false)
+  allowNewRegistrations Boolean  @default(true)
+  maxOrderAmount        Decimal  @default(1000000) @db.Decimal(12, 2)
+  currency              String   @default("NGN")
+  currencySymbol        String   @default("₦")
+  shippingFee           Decimal  @default(0) @db.Decimal(10, 2)
+  freeShippingThreshold Decimal? @db.Decimal(10, 2)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("system_settings")
 }

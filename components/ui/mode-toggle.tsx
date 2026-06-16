@@ -1,0 +1,30 @@
+// components/ui/ModeToggle.tsx
+"use client";
+
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+
+export default function ModeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    if (!resolvedTheme) {
+      setTheme("light");
+      return;
+    }
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="relative flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-transparent hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+      aria-label="Toggle theme"
+      suppressHydrationWarning
+    >
+      <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      <span className="sr-only">Toggle theme</span>
+    </button>
+  );
+}

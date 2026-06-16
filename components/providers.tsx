@@ -21,7 +21,7 @@ export function Providers({ children }: { children: ReactNode }) {
       deleteUser={{ enabled: true, sendDeleteAccountVerification: true }}
       // magicLink
       multiSession
-      redirectTo="/dashboard"
+      redirectTo="/"
       socialProviders={["google"]}
       navigate={({ to, replace }) =>
         replace ? router.replace(to) : router.push(to)
