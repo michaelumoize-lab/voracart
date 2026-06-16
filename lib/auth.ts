@@ -22,7 +22,7 @@ export const auth = betterAuth({
   }),
   secret: BETTER_AUTH_SECRET,
   plugins: [nextCookies(), admin(), multiSession()],
-  trustedOrigins: ["http://localhost:3000", "https://voracart.vercel.app"],
+  trustedOrigins: ["http://localhost:3000", "https://voracart-sell.vercel.app"],
 
   databaseHooks: {
     user: {
