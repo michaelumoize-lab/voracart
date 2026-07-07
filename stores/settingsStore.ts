@@ -25,10 +25,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const res = await fetch("/api/admin/settings");
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to fetch settings");
+        throw new Error(errorData.message || "Failed to fetch settings");
       }
       const data = await res.json();
-      set({ settings: data, isLoading: false });
+      // ✅ Unwrap the envelope
+      if (data.success && data.settings) {
+        set({ settings: data.settings, isLoading: false });
+      } else {
+        throw new Error("Invalid response format from settings API");
+      }
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : "Unknown error",
@@ -40,7 +45,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateSettings: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      // Merge current settings with updates
       const current = get().settings;
       if (!current) throw new Error("No settings loaded");
 
@@ -53,11 +57,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to update settings");
+        throw new Error(errorData.message || "Failed to update settings");
       }
 
       const updated = await res.json();
-      set({ settings: updated, isLoading: false });
+      // ✅ Unwrap the envelope
+      if (updated.success && updated.settings) {
+        set({ settings: updated.settings, isLoading: false });
+      } else {
+        throw new Error("Invalid response format from settings update");
+      }
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : "Unknown error",

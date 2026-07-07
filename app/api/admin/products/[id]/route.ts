@@ -28,7 +28,6 @@ export async function DELETE(
 
   if (!product) return apiError("Product not found", 404);
 
-  // If product has any order items, prevent deletion
   if (product.orderItems.length > 0) {
     return apiError(
       "Cannot delete product with existing orders. Deactivate it instead.",
@@ -36,10 +35,15 @@ export async function DELETE(
     );
   }
 
-  // Safe to delete – related images, cart, wishlist, reviews are cascade-deleted
-  await prisma.product.delete({
-    where: { id },
+  // Atomic conditional delete closes the check-then-act race window
+  const { count } = await prisma.product.deleteMany({
+    where: { id, orderItems: { none: {} } },
   });
-
+  if (count === 0) {
+    return apiError(
+      "Cannot delete product with existing orders. Deactivate it instead.",
+      400,
+    );
+  }
   return apiSuccess({ message: "Product deleted successfully" });
 }

@@ -38,6 +38,7 @@ export default async function AdminOrderDetailPage({
             select: {
               id: true,
               name: true,
+              slug: true,
               images: {
                 take: 1,
                 select: { url: true },

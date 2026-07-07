@@ -142,6 +142,7 @@ export default function AdminProductsClient({
                       <Link
                         href={`/products/${product.slug}`}
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="font-medium hover:text-primary transition-colors"
                       >
                         {product.name}
@@ -153,10 +154,11 @@ export default function AdminProductsClient({
                         <Link
                           href={`/store/${product.store.slug}`}
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="text-sm hover:underline"
                         >
                           {product.store.name}
-                        </Link>
+                        </Link>{" "}
                       </div>
                     </TableCell>
                     <TableCell className="whitespace-normal break-words max-w-[150px]">

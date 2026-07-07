@@ -224,7 +224,6 @@ interface OrderWithItems extends PrismaOrder {
   })[];
 }
 
-// Full order type with shipping address and relations (for detail view)
 interface OrderWithRelations extends OrderWithItems {
   shippingAddress: PrismaShippingAddress | null;
   user: Pick<PrismaUser, "id" | "name" | "email" | "image" | "role"> | null;

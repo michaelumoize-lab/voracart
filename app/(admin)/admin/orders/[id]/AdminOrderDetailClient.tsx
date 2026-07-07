@@ -234,6 +234,7 @@ export default function AdminOrderDetailClient({
                         href={`/products/${item.productId}`}
                         className="font-medium text-foreground hover:text-primary transition-colors line-clamp-2 flex-1"
                         target="_blank"
+                        rel="noopener noreferrer"
                       >
                         {item.productName}
                       </Link>
@@ -324,6 +325,7 @@ export default function AdminOrderDetailClient({
                   href={order.invoiceUrl}
                   target="_blank"
                   className="text-sm text-primary hover:underline"
+                  rel="noopener noreferrer"
                 >
                   Download Invoice
                 </Link>

@@ -63,12 +63,13 @@ export default function AdminSettingsClient({
     return <div className="text-muted-foreground">Loading settings...</div>;
   }
 
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
-
   return (
     <div className="max-w-4xl">
+      {error && (
+        <div className="mb-4 rounded-md bg-red-500/10 text-red-500 px-4 py-2 text-sm">
+          {error}
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">

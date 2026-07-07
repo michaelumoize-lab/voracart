@@ -307,6 +307,7 @@ export default function AdminProductDetailClient({
               <Link
                 href={`/store/${product.store.slug}`}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-xs text-primary hover:underline"
               >
                 Visit store →

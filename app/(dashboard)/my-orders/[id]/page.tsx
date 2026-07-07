@@ -11,7 +11,6 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession();
-
   if (!session?.user) {
     redirect("/auth/sign-in?redirect=/my-orders");
   }
@@ -20,25 +19,25 @@ export default async function OrderDetailPage({
   const userId = session.user.id;
 
   const order = await prisma.order.findFirst({
-    where: {
-      id: id,
-      userId: userId,
-    },
+    where: { id, userId },
     include: {
       items: {
         include: {
           product: {
             select: {
+              id: true,
               name: true,
-              images: {
-                take: 1,
-                select: { url: true },
-              },
+              images: { take: 1, select: { url: true } },
+              store: { select: { id: true, name: true } },
             },
           },
         },
       },
       shippingAddress: true,
+      user: {
+        select: { id: true, name: true, email: true, image: true, role: true },
+      },
+      coupon: { select: { id: true, code: true, type: true, value: true } },
     },
   });
 
@@ -47,6 +46,5 @@ export default async function OrderDetailPage({
   }
 
   const serializedOrder = serializeOrderDetail(order);
-
   return <OrderDetailClient initialOrder={serializedOrder} />;
 }
