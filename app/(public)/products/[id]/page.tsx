@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import type { Product } from "@/types";
-import Footer from "@/components/Landing/Footer";
 import ProductClient from "./ProductClient";
 import ReviewsSection from "./ReviewsSection";
 import RelatedProductsSection from "./RelatedProductsSection";
@@ -160,8 +159,6 @@ export default async function ProductPage({ params }: PageProps) {
           />
         </Suspense>
       </div>
-
-      <Footer />
     </>
   );
 }
