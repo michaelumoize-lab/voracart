@@ -6,14 +6,14 @@ import AdminOrdersClient from "./AdminOrdersClient";
 export default async function AdminOrdersPage() {
   const session = await getServerSession();
   if (!session?.user || session.user.role !== "admin") {
-    redirect("/");
+    redirect("/unauthorized");
   }
 
   const orders = await prisma.order.findMany({
     include: {
       user: { select: { name: true, email: true } },
       shippingAddress: true,
-      items: { take: 1 }, // just to indicate item count
+      _count: { select: { items: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -25,8 +25,7 @@ export default async function AdminOrdersPage() {
     createdAt: order.createdAt.toISOString(),
     customerName: order.user?.name || "Unknown",
     customerEmail: order.user?.email || "",
-    itemCount: order.items.length,
+    itemCount: order._count.items,
   }));
-
   return <AdminOrdersClient orders={serialized} />;
 }

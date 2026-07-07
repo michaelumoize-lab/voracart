@@ -1,4 +1,4 @@
-// app/admin/applications/AdminApplicationsClient.tsx
+// app/(admin)/admin/applications/AdminApplicationsClient.tsx
 "use client";
 
 import { useState } from "react";
@@ -47,6 +47,13 @@ export default function AdminApplicationsClient({
   const [action, setAction] = useState<"approve" | "reject" | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Shared close handler to reset all modal state
+  const closeModal = () => {
+    setSelectedApp(null);
+    setAction(null);
+    setAdminNotes("");
+  };
+
   const handleAction = async () => {
     if (!selectedApp || !action) return;
     setLoading(true);
@@ -70,15 +77,15 @@ export default function AdminApplicationsClient({
       toast.error(error instanceof Error ? error.message : "Failed");
     } finally {
       setLoading(false);
-      setSelectedApp(null);
-      setAction(null);
-      setAdminNotes("");
+      closeModal(); // reset everything after completion
     }
   };
 
   const openModal = (app: Application, actionType: "approve" | "reject") => {
     setSelectedApp(app);
     setAction(actionType);
+    // Ensure notes are cleared when opening a new modal (though closeModal already handles it)
+    setAdminNotes("");
   };
 
   return (
@@ -165,7 +172,7 @@ export default function AdminApplicationsClient({
       {/* Modal for approve/reject */}
       <Dialog
         open={!!selectedApp}
-        onOpenChange={(open) => !open && setSelectedApp(null)}
+        onOpenChange={(open) => !open && closeModal()} // use closeModal on dismiss
       >
         <DialogContent>
           <DialogHeader>
@@ -187,7 +194,7 @@ export default function AdminApplicationsClient({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setSelectedApp(null)}
+              onClick={closeModal} // use closeModal here too
               disabled={loading}
             >
               Cancel

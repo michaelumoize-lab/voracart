@@ -1,4 +1,4 @@
-// app/admin/AdminDashboardClient.tsx
+// app/(admin)/admin/AdminDashboardClient.tsx
 "use client";
 
 import {
@@ -8,9 +8,20 @@ import {
   Package,
   Clock,
   Store,
-  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
+// Shared formatter to avoid hydration mismatches
+const numberFormat = new Intl.NumberFormat("en-US");
 
 interface Stats {
   totalUsers: number;
@@ -28,6 +39,26 @@ interface Stats {
   }>;
 }
 
+// Status configuration with valid Badge variants and optional custom classes
+const statusConfig: Record<
+  string,
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    className?: string;
+  }
+> = {
+  PENDING: { variant: "secondary" },
+  CONFIRMED: { variant: "default" },
+  PROCESSING: { variant: "default" },
+  SHIPPED: { variant: "default" },
+  DELIVERED: {
+    variant: "outline",
+    className: "border-green-500 text-green-600",
+  },
+  CANCELLED: { variant: "destructive" },
+  REFUNDED: { variant: "outline" },
+};
+
 export default function AdminDashboardClient({ stats }: { stats: Stats }) {
   const statCards = [
     {
@@ -44,7 +75,7 @@ export default function AdminDashboardClient({ stats }: { stats: Stats }) {
     },
     {
       label: "Revenue",
-      value: `₦${stats.totalRevenue.toLocaleString()}`,
+      value: `₦${numberFormat.format(stats.totalRevenue)}`,
       icon: DollarSign,
       color: "text-green-500",
     },
@@ -97,28 +128,43 @@ export default function AdminDashboardClient({ stats }: { stats: Stats }) {
           {stats.recentOrders.length === 0 ? (
             <p className="text-sm text-muted-foreground">No recent orders</p>
           ) : (
-            <div className="space-y-3">
-              {stats.recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between border-b pb-2 text-sm"
-                >
-                  <div>
-                    <p className="font-medium">#{order.id.slice(-8)}</p>
-                    <p className="text-muted-foreground">
-                      {order.customerName}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {order.status}
-                    </span>
-                  </div>
-                  <div className="font-medium">
-                    ₦{order.totalAmount.toLocaleString()}
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats.recentOrders.map((order) => {
+                    const config = statusConfig[order.status] || {
+                      variant: "outline",
+                    };
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          #{order.id.slice(-8)}
+                        </TableCell>
+                        <TableCell>{order.customerName}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={config.variant}
+                            className={config.className}
+                          >
+                            {order.status.toLowerCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          ₦{numberFormat.format(order.totalAmount)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

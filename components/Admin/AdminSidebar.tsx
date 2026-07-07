@@ -11,12 +11,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRole } from "@/lib/auth-helper";
 import { useAdminStore } from "@/stores/adminStore";
-import { useSellerStore } from "@/stores/sellerStore";
 import SidebarCountBadge from "@/components/ui/SidebarCountBadge";
 import {
-  Plus,
-  Package,
-  ShoppingBag,
   Users,
   LayoutDashboard,
   ShoppingCart,
@@ -24,6 +20,7 @@ import {
   Settings,
   Menu,
   X,
+  Package,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -32,7 +29,7 @@ import {
 
 const POLL_INTERVAL = 30_000;
 
-type CountKey = "pendingOrders" | "totalProducts" | "pendingApplications";
+type CountKey = "pendingApplications";
 
 interface MenuItem {
   name: string;
@@ -41,37 +38,30 @@ interface MenuItem {
   countKey?: CountKey;
 }
 
-type RoleLabel = "Admin" | "Seller";
-
 interface SidebarSharedProps {
   menuItems: MenuItem[];
   getCount: (key?: CountKey) => number;
   isPathActive: (path: string) => boolean;
-  roleLabel: RoleLabel;
 }
 
 // ---------------------------------------------------------------------------
-// useMounted — avoids hydration mismatch without a setState-in-effect pattern.
-// useSyncExternalStore subscribes to the client snapshot immediately after
-// hydration, returning `false` on the server and `true` on the client.
+// useMounted — avoids hydration mismatch
 // ---------------------------------------------------------------------------
 
 function subscribe(cb: () => void): () => void {
-  // No external subscription needed — snapshot never changes after mount.
-  // Return a no-op unsubscribe.
   return () => {};
 }
 
 function useMounted(): boolean {
   return useSyncExternalStore(
     subscribe,
-    () => true, // client snapshot
-    () => false, // server snapshot
+    () => true,
+    () => false,
   );
 }
 
 // ---------------------------------------------------------------------------
-// NavItem — shared between desktop & mobile to avoid duplication
+// NavItem
 // ---------------------------------------------------------------------------
 
 interface NavItemProps {
@@ -79,7 +69,6 @@ interface NavItemProps {
   isActive: boolean;
   count: number;
   onClick?: () => void;
-  /** Slightly larger tap target for mobile */
   mobile?: boolean;
 }
 
@@ -111,25 +100,21 @@ const NavItem = ({
 };
 
 // ---------------------------------------------------------------------------
-// SidebarHeader — shared branding / role badge
+// SidebarHeader
 // ---------------------------------------------------------------------------
 
 interface SidebarHeaderProps {
-  roleLabel: RoleLabel;
   onClose?: () => void;
 }
 
-const SidebarHeader = ({ roleLabel, onClose }: SidebarHeaderProps) => (
+const SidebarHeader = ({ onClose }: SidebarHeaderProps) => (
   <div className="flex items-center justify-between p-4 border-b border-border">
     <div className="flex items-center gap-2">
-      <Link
-        href={roleLabel === "Admin" ? "/admin" : "/seller"}
-        className="font-bold text-xl text-primary"
-      >
+      <Link href="/admin" className="font-bold text-xl text-primary">
         VoraCart
       </Link>
       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-        {roleLabel}
+        Admin
       </span>
     </div>
     {onClose && (
@@ -146,7 +131,7 @@ const SidebarHeader = ({ roleLabel, onClose }: SidebarHeaderProps) => (
 );
 
 // ---------------------------------------------------------------------------
-// SidebarNav — shared navigation list
+// SidebarNav
 // ---------------------------------------------------------------------------
 
 interface SidebarNavProps extends SidebarSharedProps {
@@ -181,7 +166,7 @@ const SidebarNav = ({
 
 const DesktopSidebar = (props: SidebarSharedProps) => (
   <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 bg-background border-r border-border z-30">
-    <SidebarHeader roleLabel={props.roleLabel} />
+    <SidebarHeader />
     <SidebarNav {...props} />
   </aside>
 );
@@ -197,21 +182,6 @@ interface MobileSidebarProps extends SidebarSharedProps {
 
 const MobileSidebar = ({ isOpen, onClose, ...shared }: MobileSidebarProps) => (
   <>
-    {/* Hamburger trigger */}
-    <button
-      type="button"
-      onClick={() => {
-        // This is a direct event handler — not inside an effect — so setState
-        // (via onOpen) is fine here.
-        // The parent toggles isOpen via regular event handling.
-      }}
-      className="md:hidden fixed top-4 left-4 z-20 p-2 rounded-lg bg-background border border-border shadow-sm"
-      aria-label="Open menu"
-    >
-      <Menu className="w-5 h-5 text-foreground" />
-    </button>
-
-    {/* Overlay */}
     {isOpen && (
       <div
         role="presentation"
@@ -220,7 +190,6 @@ const MobileSidebar = ({ isOpen, onClose, ...shared }: MobileSidebarProps) => (
       />
     )}
 
-    {/* Drawer */}
     <div
       role="dialog"
       aria-modal="true"
@@ -229,48 +198,29 @@ const MobileSidebar = ({ isOpen, onClose, ...shared }: MobileSidebarProps) => (
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <SidebarHeader roleLabel={shared.roleLabel} onClose={onClose} />
+      <SidebarHeader onClose={onClose} />
       <SidebarNav {...shared} onItemClick={onClose} mobile />
     </div>
   </>
 );
 
 // ---------------------------------------------------------------------------
-// Skeleton shown while role is loading
+// Skeleton
 // ---------------------------------------------------------------------------
 
 const SidebarSkeleton = () => (
   <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 bg-background border-r border-border z-30">
-    {/* Header */}
     <div className="flex items-center gap-2.5 p-4 border-b border-border">
       <div className="h-6 w-24 rounded bg-muted animate-pulse" />
       <div className="h-5 w-11 rounded-full bg-muted animate-pulse" />
     </div>
-
-    {/* Seller nav items */}
     <nav className="flex-1 py-4 space-y-0.5">
-      {/* Dashboard */}
       <SkeletonItem width="w-18" delay="delay-[0ms]" />
-      {/* Add Product */}
-      <SkeletonItem width="w-24" delay="delay-[40ms]" />
-      {/* Products — with badge */}
-      <SkeletonItem width="w-16" delay="delay-[80ms]" badge />
-      {/* Orders — with badge */}
-      <SkeletonItem width="w-14" delay="delay-[120ms]" badge />
-      {/* Settings */}
-      <SkeletonItem width="w-16" delay="delay-[160ms]" />
-
-      {/* Divider before admin section */}
-      <div className="mx-4 my-3 border-t border-border" />
-
-      {/* Applications — with badge */}
-      <SkeletonItem width="w-24" delay="delay-[200ms]" badge />
-      {/* Users */}
-      <SkeletonItem width="w-11" delay="delay-[240ms]" />
-      {/* All Orders */}
-      <SkeletonItem width="w-20" delay="delay-[280ms]" />
-      {/* Reports */}
-      <SkeletonItem width="w-14" delay="delay-[320ms]" />
+      <SkeletonItem width="w-24" delay="delay-[40ms]" badge />
+      <SkeletonItem width="w-11" delay="delay-[80ms]" />
+      <SkeletonItem width="w-20" delay="delay-[120ms]" />
+      <SkeletonItem width="w-14" delay="delay-[160ms]" />
+      <SkeletonItem width="w-16" delay="delay-[200ms]" />
     </nav>
   </aside>
 );
@@ -300,155 +250,83 @@ const SkeletonItem = ({
 );
 
 // ---------------------------------------------------------------------------
-// SideBar — main export
+// AdminSidebar - main export
 // ---------------------------------------------------------------------------
 
-const SideBar = () => {
+const AdminSidebar = () => {
   const pathname = usePathname();
   const mounted = useMounted();
-  const { isSeller, isAdmin, isLoading: roleLoading } = useRole();
+  const { isAdmin, isLoading: roleLoading } = useRole();
 
-  // Using a ref for isMobileOpen avoids the "setState synchronously in effect"
-  // lint warning triggered by the pathname-change effect. We use a React state
-  // *setter* only from genuine event handlers (clicks), never from effects.
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
-  // Zustand stores
   const { pendingApplications, fetchPendingApplications } = useAdminStore();
-  const { pendingOrders, totalProducts, fetchSellerCounts } = useSellerStore();
 
-  // ── Polling: Admin ────────────────────────────────────────────────────────
-  // We wrap each call in a local async thunk so the effect body itself is
-  // synchronous — satisfying the linter rule — while the actual state updates
-  // happen inside the async callbacks of the store actions.
+  // Polling for pending applications
   useEffect(() => {
     if (!isAdmin) return;
-
-    // Kick off the first fetch asynchronously (no synchronous setState here).
     void fetchPendingApplications();
-
-    const id = setInterval(() => {
-      void fetchPendingApplications();
-    }, POLL_INTERVAL);
-
+    const id = setInterval(
+      () => void fetchPendingApplications(),
+      POLL_INTERVAL,
+    );
     return () => clearInterval(id);
   }, [isAdmin, fetchPendingApplications]);
 
-  // ── Polling: Seller ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isSeller) return;
-
-    void fetchSellerCounts();
-
-    const id = setInterval(() => {
-      void fetchSellerCounts();
-    }, POLL_INTERVAL);
-
-    return () => clearInterval(id);
-  }, [isSeller, fetchSellerCounts]);
-
-  // ── Close mobile menu on route change ────────────────────────────────────
-  // Instead of calling setIsMobileOpen inside the effect (which triggers the
-  // lint warning), we track the *previous* pathname and only call the setter
-  // when the pathname actually changes — from within a ref comparison, still
-  // synchronous but now correctly guarded so React doesn't flag it.
-  //
-  // The cleanest pattern here is to simply use a ref-gated layout effect, or
-  // better yet: reset via the Link's onClick (already done in MobileSidebar
-  // via onItemClick={onClose}). For programmatic navigation or back-button
-  // closes we still need an effect, but we defer the setState to a
-  // microtask so it doesn't fire synchronously in the effect body.
+  // Close mobile menu on route change
   const prevPathRef = useRef(pathname);
   useEffect(() => {
     if (prevPathRef.current !== pathname) {
       prevPathRef.current = pathname;
-      // Defer to avoid the synchronous-setState-in-effect lint error.
       const id = setTimeout(() => setIsMobileOpen(false), 0);
       return () => clearTimeout(id);
     }
   }, [pathname]);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   const isPathActive = useCallback(
     (itemPath: string): boolean => {
-      if (itemPath === "/seller" || itemPath === "/admin") {
-        return pathname === itemPath;
-      }
+      if (itemPath === "/admin") return pathname === itemPath;
       return pathname.startsWith(itemPath + "/") || pathname === itemPath;
     },
     [pathname],
   );
 
-  const getMenuItems = useCallback((): MenuItem[] => {
-    const sellerItems: MenuItem[] = [
-      { name: "Dashboard", path: "/seller", icon: LayoutDashboard },
-      { name: "Add Product", path: "/seller/add-product", icon: Plus },
-      {
-        name: "Products",
-        path: "/seller/products",
-        icon: Package,
-        countKey: "totalProducts",
-      },
-      {
-        name: "Orders",
-        path: "/seller/orders",
-        icon: ShoppingBag,
-        countKey: "pendingOrders",
-      },
-      { name: "Settings", path: "/seller/settings", icon: Settings },
-    ];
-
-    const adminItems: MenuItem[] = [
-      {
-        name: "Applications",
-        path: "/admin/applications",
-        icon: Users,
-        countKey: "pendingApplications",
-      },
-      { name: "Users", path: "/admin/users", icon: Users },
-      { name: "All Orders", path: "/admin/orders", icon: ShoppingCart },
-      { name: "Reports", path: "/admin/reports", icon: FileText },
-    ];
-
-    if (isAdmin) return [...sellerItems, ...adminItems];
-    if (isSeller) return sellerItems;
-    return [];
-  }, [isAdmin, isSeller]);
+  const menuItems: MenuItem[] = [
+    { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    { name: "Products", path: "/admin/products", icon: Package },
+    {
+      name: "Applications",
+      path: "/admin/applications",
+      icon: Users,
+      countKey: "pendingApplications",
+    },
+    { name: "Users", path: "/admin/users", icon: Users },
+    { name: "All Orders", path: "/admin/orders", icon: ShoppingCart },
+    { name: "Reports", path: "/admin/reports", icon: FileText },
+    { name: "Settings", path: "/admin/settings", icon: Settings },
+  ];
 
   const getCount = useCallback(
     (key?: CountKey): number => {
-      if (!key) return 0;
-      const counts: Record<CountKey, number> = {
-        pendingApplications,
-        pendingOrders,
-        totalProducts,
-      };
-      return counts[key];
+      return key === "pendingApplications" ? pendingApplications : 0;
     },
-    [pendingApplications, pendingOrders, totalProducts],
+    [pendingApplications],
   );
 
-  // ── Render guards ─────────────────────────────────────────────────────────
-
   if (roleLoading || !mounted) return <SidebarSkeleton />;
-  if (!isSeller && !isAdmin) return null;
-
-  const menuItems = getMenuItems();
-  const roleLabel: RoleLabel = isAdmin ? "Admin" : "Seller";
+  if (!isAdmin) return null;
 
   const sharedProps: SidebarSharedProps = {
     menuItems,
     getCount,
     isPathActive,
-    roleLabel,
   };
 
   return (
     <>
       <DesktopSidebar {...sharedProps} />
 
-      {/* Mobile hamburger trigger lives outside the drawer so it's always visible */}
+      {/* Mobile hamburger trigger */}
       <button
         type="button"
         onClick={() => setIsMobileOpen(true)}
@@ -463,11 +341,8 @@ const SideBar = () => {
         isOpen={isMobileOpen}
         onClose={() => setIsMobileOpen(false)}
       />
-
-      {/* Desktop offset spacer */}
-      <div className="hidden md:block ml-64" />
     </>
   );
 };
 
-export default SideBar;
+export default AdminSidebar;

@@ -6,35 +6,53 @@ import { apiSuccess, apiError, validateBody } from "@/lib/api-helper";
 import { z } from "zod";
 
 const applySchema = z.object({
-  storeName: z.string().min(1),
-  description: z.string().min(10),
-  phone: z.string().min(5),
+  storeName: z.string().min(1).max(50),
+  description: z.string().min(10).max(500),
+  phone: z
+    .string()
+    .min(5)
+    .regex(/^[\+\d\s\-\(\)]{5,}$/, "Invalid phone number"),
 });
 
 export async function POST(req: NextRequest) {
+  // 1. Authentication
   const session = await getServerSession();
-  if (!session?.user) return apiError("Unauthorized", 401);
+  if (!session?.user) {
+    return apiError("Unauthorized", 401);
+  }
 
-  // 🛡️ Prevent sellers from applying
-  if (session.user.role === "seller") {
+  // 2. Only buyers can apply
+  if (session.user.role !== "buyer") {
+    return apiError("Only buyers can apply to become sellers", 403);
+  }
+
+  const userId = session.user.id;
+
+  // 3. Check if user is already a seller (has a store)
+  const existingStore = await prisma.store.findUnique({
+    where: { userId },
+  });
+  if (existingStore) {
     return apiError("You are already a seller", 400);
   }
 
+  // 4. Validate request body
   const validation = await validateBody(req, applySchema);
   if (validation.error) return validation.error;
 
   const { storeName, description, phone } = validation.data;
-  const userId = session.user.id;
 
-  const existing = await prisma.sellerApplication.findUnique({
+  // 5. Check existing application
+  const existingApplication = await prisma.sellerApplication.findUnique({
     where: { userId },
   });
 
-  if (existing && existing.status !== "REJECTED") {
+  // If there's a pending or approved application, block reapplication
+  if (existingApplication && existingApplication.status !== "REJECTED") {
     return apiError("You already have a pending or approved application", 400);
   }
 
-  // Upsert – `updatedAt` will be set automatically by Prisma
+  // 6. Upsert – if rejected, update; otherwise create
   const application = await prisma.sellerApplication.upsert({
     where: { userId },
     update: {

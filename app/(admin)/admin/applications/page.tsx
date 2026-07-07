@@ -6,7 +6,7 @@ import AdminApplicationsClient from "./AdminApplicationsClient";
 export default async function AdminApplicationsPage() {
   const session = await getServerSession();
   if (!session?.user || session.user.role !== "admin") {
-    redirect("/");
+    redirect("/unauthorized");
   }
 
   const applications = await prisma.sellerApplication.findMany({
