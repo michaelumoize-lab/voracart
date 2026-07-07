@@ -6,10 +6,11 @@ import type {
   SystemSettings as PrismaSystemSettings,
   Order as PrismaOrder,
   OrderItem as PrismaOrderItem,
-  ShippingAddress as PrismaShippingAddressFull,
   Product as PrismaProduct,
   ProductImage as PrismaProductImage,
   Store as PrismaStore,
+  User as PrismaUser,
+  Coupon as PrismaCoupon,
 } from "@prisma/client";
 
 // ============================================
@@ -212,15 +213,21 @@ export function serializeProductDetail(
 interface OrderWithItems extends PrismaOrder {
   items: (PrismaOrderItem & {
     product: {
+      id: string;
       name: string;
       images: { url: string }[];
+      store: {
+        id: string;
+        name: string;
+      } | null;
     };
   })[];
 }
 
-// Full order type with shipping address (for detail view)
 interface OrderWithRelations extends OrderWithItems {
-  shippingAddress: PrismaShippingAddressFull | null;
+  shippingAddress: PrismaShippingAddress | null;
+  user: Pick<PrismaUser, "id" | "name" | "email" | "image" | "role"> | null;
+  coupon: Pick<PrismaCoupon, "id" | "code" | "type" | "value"> | null;
 }
 
 // For order LIST views (my-orders page) - only needs items, no address
@@ -242,7 +249,7 @@ export function serializeOrderList(
   }));
 }
 
-// For single order detail view - requires full order with address
+// For single order detail view - requires full order with address, user, coupon
 export function serializeOrderDetail(
   order: OrderWithRelations,
 ): SerializedOrderDetail {
@@ -250,6 +257,7 @@ export function serializeOrderDetail(
     id: order.id,
     status: order.status,
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
     totalAmount: Number(order.totalAmount),
     subtotal: Number(order.subtotal),
     shippingFee: Number(order.shippingFee),
@@ -261,6 +269,8 @@ export function serializeOrderDetail(
     emailSent: order.emailSent,
     notificationSent: order.notificationSent,
     paidAt: order.paidAt?.toISOString() || null,
+
+    // Shipping address with phone included
     shippingAddress: order.shippingAddress
       ? {
           fullName: order.shippingAddress.fullName,
@@ -268,8 +278,32 @@ export function serializeOrderDetail(
           city: order.shippingAddress.city,
           state: order.shippingAddress.state,
           pincode: order.shippingAddress.pincode,
+          phone: order.shippingAddress.phone,
         }
       : null,
+
+    // User/customer info
+    user: order.user
+      ? {
+          id: order.user.id,
+          name: order.user.name,
+          email: order.user.email,
+          image: order.user.image,
+          role: order.user.role,
+        }
+      : null,
+
+    // Coupon info if applied
+    coupon: order.coupon
+      ? {
+          id: order.coupon.id,
+          code: order.coupon.code,
+          type: order.coupon.type,
+          value: Number(order.coupon.value),
+        }
+      : null,
+
+    // Order items with product and store info
     items: order.items.map((item) => ({
       id: item.id,
       productId: item.productId,
@@ -279,6 +313,15 @@ export function serializeOrderDetail(
       unitPrice: Number(item.unitPrice),
       total: Number(item.total),
       status: item.status,
+      // Include store info for admin view
+      product: {
+        store: item.product.store
+          ? {
+              id: item.product.store.id,
+              name: item.product.store.name,
+            }
+          : null,
+      },
     })),
   };
 }
@@ -392,6 +435,7 @@ export interface SerializedOrderDetail {
   id: string;
   status: string;
   createdAt: string;
+  updatedAt: string;
   totalAmount: number;
   subtotal: number;
   shippingFee: number;
@@ -409,6 +453,20 @@ export interface SerializedOrderDetail {
     city: string;
     state: string;
     pincode: string;
+    phone: string;
+  } | null;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    role: string;
+  } | null;
+  coupon: {
+    id: string;
+    code: string;
+    type: string;
+    value: number;
   } | null;
   items: {
     id: string;
@@ -419,5 +477,11 @@ export interface SerializedOrderDetail {
     unitPrice: number;
     total: number;
     status: string;
+    product?: {
+      store: {
+        id: string;
+        name: string;
+      } | null;
+    };
   }[];
 }

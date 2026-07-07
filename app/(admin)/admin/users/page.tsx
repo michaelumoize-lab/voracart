@@ -89,7 +89,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type User = {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   role: string;
   banned: boolean;
@@ -109,6 +109,10 @@ type Session = {
   ipAddress?: string;
   userAgent?: string;
 };
+
+function getDisplayName(user: Pick<User, "name" | "email">) {
+  return user.name?.trim() || user.email || "Unnamed user";
+}
 
 // ─── Role Badge ───────────────────────────────────────────────────────────────
 
@@ -269,7 +273,7 @@ function EditUserDialog({
   const [name, setName] = useState(user?.name ?? "");
 
   useEffect(() => {
-    if (user) setName(user.name);
+    if (user) setName(user.name ?? "");
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1376,7 +1380,7 @@ export default function AdminPage() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            {user.name}
+                            {getDisplayName(user)}
                             {user.id === currentUser?.id && (
                               <Badge
                                 variant="outline"
@@ -1577,30 +1581,36 @@ export default function AdminPage() {
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {latestUsers.map((u) => (
-                      <div
-                        key={u.id}
-                        className="flex items-center justify-between text-sm py-2 border-b last:border-0"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                            {u.name.charAt(0).toUpperCase()}
+                    {latestUsers.map((u) => {
+                      const displayName = getDisplayName(u);
+
+                      return (
+                        <div
+                          key={u.id}
+                          className="flex items-center justify-between text-sm py-2 border-b last:border-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                              {displayName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium leading-none">
+                                {displayName}
+                              </p>
+                              <p className="text-muted-foreground text-xs mt-0.5">
+                                {u.email}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium leading-none">{u.name}</p>
-                            <p className="text-muted-foreground text-xs mt-0.5">
-                              {u.email}
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <RoleBadge role={u.role} />
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(u.createdAt).toLocaleDateString()}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <RoleBadge role={u.role} />
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(u.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
